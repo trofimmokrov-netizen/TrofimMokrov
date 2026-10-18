@@ -51,7 +51,7 @@ class TelegramAPI:
         self._chat_calls = {}
 
     def call(self, method: str, **payload: Any) -> Any:
-        if method not in {"getMe", "getWebhookInfo", "getUpdates", "sendMessage", "setMyCommands",
+        if method not in {"getMe", "getFile", "getWebhookInfo", "getUpdates", "sendMessage", "setMyCommands", "getMyCommands",
                           "setMyDescription", "getMyDescription", "setMyShortDescription", "getMyShortDescription"}:
             raise ValueError("Неизвестный метод Telegram API.")
         if method == "sendMessage":
@@ -95,6 +95,21 @@ class TelegramAPI:
         if "result" not in data:
             raise DeliveryUnknown("В ответе Telegram отсутствует результат.")
         return data["result"]
+
+    def photo_bytes(self, file_id):
+        import re
+        metadata = self.call("getFile", file_id=file_id)
+        path = metadata.get("file_path", "") if isinstance(metadata, dict) else ""
+        if not re.fullmatch(r"photos/[A-Za-z0-9_.-]+\.jpg", path):
+            raise DeliveryUnknown("Telegram не подтвердил JPEG-фотографию.")
+        try:
+            with urlopen("https://api.telegram.org/file/bot" + self._token + "/" + path, timeout=30) as response:
+                data = response.read(8_000_001)
+        except (URLError, OSError, http.client.HTTPException):
+            raise DeliveryUnknown("Не удалось скачать фотографию из Telegram.") from None
+        if len(data) > 8_000_000 or not data.startswith(b"\xff\xd8"):
+            raise DeliveryUnknown("Нужна JPEG-фотография размером до 8 МБ.")
+        return data
 
 
 class Store:
@@ -249,9 +264,15 @@ class Bot:
             if address.scheme != "https" or not address.hostname or address.username or address.password or address.query or address.fragment:
                 raise ValueError("TELEGRAM_MINIAPP_URL должен быть публичным HTTPS-адресом без параметров и учётных данных.")
             self.main["keyboard"].insert(0, [{"text": "Открыть приложение", "web_app": {"url": miniapp_url}}])
+        from .publishing import PublisherMenu
+        self.publisher = PublisherMenu(self)
 
     def reply(self, chat, text, keyboard=None):
-        self.store.enqueue(chat, text, self.main if keyboard is None else keyboard)
+        if keyboard is None:
+            keyboard = self.main
+            if chat == self.owner:
+                keyboard = {**self.main, "keyboard": self.main["keyboard"] + [["Мои публикации"]]}
+        self.store.enqueue(chat, text, keyboard)
 
     def start_request(self, chat, source, service_id=None, request_format="standard"):
         if not self.owner:
@@ -307,6 +328,8 @@ class Bot:
             self.store.db.execute("DELETE FROM updates WHERE processed<?", (now - 7 * 86400,))
 
     def _message(self, identifier, chat, user, message, now):
+        if self.publisher.handle(chat, message, now):
+            return
         if "web_app_data" in message:
             self._miniapp(identifier, chat, user, message["web_app_data"], now)
             return

@@ -70,8 +70,17 @@ def main():
         api.call("setMyCommands", commands=COMMANDS)
         store.recover()
         bot = Bot(store, owner, miniapp_url=os.environ.get("TELEGRAM_MINIAPP_URL"))
+        from .publish_worker import PublishWorker
+        publisher = PublishWorker(store, api, db.parent)
+        if owner:
+            api.call("setMyCommands", commands=COMMANDS + [
+                {"command": "publish", "description": "Создать личную публикацию"},
+                {"command": "accounts", "description": "Подключённые площадки"},
+                {"command": "publications", "description": "Результаты публикаций"},
+            ], scope={"type": "chat", "chat_id": owner})
         print("Меню зарегистрировано. Запущен один процесс long polling.", flush=True)
         while True:
+            publisher.step()
             store.flush(api)
             try:
                 updates = api.call("getUpdates", offset=store.offset, timeout=25, limit=50, allowed_updates=["message"])

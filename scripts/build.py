@@ -32,7 +32,7 @@ ICONS={
  '≋':icon('M3 5h18M3 12h13M3 19h18'),
  '⊞':icon('M3 3h18v18H3zM12 3v18M3 12h18'),
  '◇':icon('m12 3 9 9-9 9-9-9z')}
-NAV=[('index.html','Главная'),('about.html','Обо мне'),('services.html','Услуги и цены'),('portfolio.html','Портфолио'),('articles.html','Статьи'),('contact.html','Контакты')]
+NAV=[('index.html','Главная'),('about.html','Обо мне'),('services.html','Услуги и цены'),('portfolio.html','Портфолио'),('articles.html','Статьи'),('updates.html','Обновления'),('contact.html','Контакты')]
 outputs=[]
 def href(current,target):
  if current=='404.html' and base:return base+'/'+target
@@ -133,6 +133,23 @@ body+='<section class="section split"><div class="contact-list">'
 for label,value,url in [('Оставить заявку в боте','@'+bot_address.path.lstrip('/'),bot_link()),('Telegram — написать лично','@TrofimMokrov',site['telegram']),('Электронная почта',site['email'],'mailto:'+site['email']),('Телефон',site['phone_display'],'tel:'+site['phone'])]:body+=f'<a class="contact-item" href="{e(url)}"'+(' target="_blank" rel="noopener noreferrer"' if url.startswith('https') else '')+f'><span><small>{label}</small>{e(value)}</span><span aria-hidden="true">↗</span></a>'
 body+='''</div><div><h2>Что написать<br>в первом сообщении</h2><ol><li>Чем занимаетесь и кому помогаете.</li><li>Какую задачу хотите решить.</li><li>Что уже есть: сайт, площадки, инструменты.</li><li>Какие ограничения по объёму и бюджету важно учесть.</li></ol><p class="note">Не отправляйте пароли, ключи доступа и личные данные клиентов. При необходимости отдельно согласуем безопасный способ доступа.</p></div></section>'''
 render(p,'Контакты','Обсудить сайт, автоматизацию или контент с Трофимом Мокровым: Telegram @TrofimMokrov, trofimmokrov@gmail.com, +7 (915) 998-25-54.',body)
+# Owner-approved updates from the private Telegram publishing queue.
+p='updates.html'
+body=heading('Обновления','Новые идеи.<br>Текущая работа.','Заметки Трофима Мокрова о проектах, сайтах, AI и автоматизации.')
+updates=[]
+for source in sorted((ROOT/'content/updates').glob('*.json'),reverse=True):
+ item=json.loads(source.read_text())
+ if not re.fullmatch(r'[0-9a-f]{32}',item.get('id','')):raise ValueError('Invalid update ID')
+ updates.append(item)
+if not updates:body+='<section class="section"><p class="lead">Здесь появятся заметки о новых проектах и работе над ними.</p></section>'
+for item in updates:
+ body+=f'''<article class="section update-entry" id="post-{item['id']}"><time datetime="{e(item['date'],quote=True)}">{e(item['date'])}</time><h2>{e(item['title'])}</h2>'''
+ image=item.get('image')
+ if image:
+  if image!=f"assets/updates/{item['id']}.jpg":raise ValueError('Invalid update image')
+  body+=f'<img class="update-photo" src="{e(image,quote=True)}" loading="lazy" alt="Фотография к публикации: {e(item["title"],quote=True)}">'
+ body+='<div class="reading">'+''.join('<p>'+e(part).replace('\n','<br>')+'</p>' for part in item['text'].split('\n\n'))+'</div></article>'
+render(p,'Обновления','Новые публикации Трофима Мокрова о проектах, сайтах, AI и автоматизации.',body)
 # Custom 404, portable relative to deployment path when URL is configured
 p='404.html';body=heading('404 / Страница не найдена','Кажется, здесь<br>пока ничего нет.','Проверьте адрес или вернитесь на главную страницу.')+'<div class="actions" style="margin-bottom:70px"><a class="button" href="'+(e(base)+'/' if base else 'index.html')+'">На главную ↗</a></div>'
 render(p,'Страница не найдена','Перейдите на главную страницу сайта Трофима Мокрова.',body)

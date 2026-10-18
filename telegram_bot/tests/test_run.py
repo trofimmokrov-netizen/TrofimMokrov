@@ -103,7 +103,7 @@ class RunnerTests(unittest.TestCase):
     def test_temporary_telegram_read_error_does_not_stop_worker(self):
         with patch.object(run.time, 'sleep') as pause:
             code, calls, _, stderr, _ = self.invoke(responses=[
-                {"username": "TrofimAI_bot"}, {"url": ""}, True,
+                {"username": "TrofimAI_bot"}, {"url": ""}, True, True,
                 run.TelegramRejected(503), [], KeyboardInterrupt(),
             ])
         self.assertEqual(code, 0)

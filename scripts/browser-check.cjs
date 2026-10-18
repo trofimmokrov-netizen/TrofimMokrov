@@ -9,7 +9,7 @@ const base=(process.env.SITE_URL||'http://127.0.0.1:8000').replace(/\/$/,'')+'/'
  const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto(base,{waitUntil:'networkidle'});
  if(process.argv.includes('--capture')) await page.screenshot({path:path.join(root,'assets/site-preview.png')});
- const paths=['index.html','about.html','services.html','portfolio.html','articles.html','contact.html','404.html',...fs.readdirSync(path.join(root,'articles')).filter(n=>n.endsWith('.html')).map(n=>'articles/'+n)];
+ const paths=['index.html','about.html','services.html','portfolio.html','articles.html','updates.html','contact.html','404.html',...fs.readdirSync(path.join(root,'articles')).filter(n=>n.endsWith('.html')).map(n=>'articles/'+n)];
  let count=0;
  for(const width of [320,390,768,1440]){
   await page.setViewportSize({width,height:900});
