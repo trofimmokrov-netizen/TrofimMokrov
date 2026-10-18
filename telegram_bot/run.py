@@ -20,6 +20,7 @@ COMMANDS = [
     {"command": "portfolio", "description": "Портфолио"},
     {"command": "help", "description": "Помощник по услугам"},
     {"command": "request", "description": "Оставить заявку"},
+    {"command": "pilot", "description": "Обсудить пробную задачу"},
     {"command": "menu", "description": "Главное меню"},
     {"command": "cancel", "description": "Отменить оформление заявки"},
     {"command": "id", "description": "Узнать свой chat ID"},

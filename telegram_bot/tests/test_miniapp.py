@@ -107,6 +107,16 @@ class MiniAppTests(unittest.TestCase):
             payload = json.loads(self.store.db.execute('SELECT payload FROM outbox ORDER BY id DESC').fetchone()[0])
             self.assertEqual(payload['reply_markup']['inline_keyboard'][0][0]['url'], self.bot.website + suffix)
 
+    def test_bot_service_answers_distinguish_setup_and_hosting_costs(self):
+        for identifier, text in ((1, 'Нужен Telegram-бот под мой бренд'), (2, 'Бот будет работать бесплатно?')):
+            self.bot.process({'update_id': identifier, 'message': {'chat': {'id': 101, 'type': 'private'}, 'from': {'id': 101}, 'text': text}})
+            payload = json.loads(self.store.db.execute('SELECT payload FROM outbox ORDER BY id DESC').fetchone()[0])
+            self.assertIn(self.bot.by_id['telegram-bots']['price'], payload['text'])
+            if identifier == 1:
+                self.assertIn('/services.html#telegram-bots', payload['text'])
+            else:
+                self.assertIn(self.bot.by_id['telegram-bots']['separate'], payload['text'])
+
 
 if __name__ == '__main__':
     unittest.main()

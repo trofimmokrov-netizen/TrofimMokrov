@@ -19,7 +19,7 @@ from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 MAIN = {
-    "keyboard": [["Услуги и цены", "Портфолио"], ["Оставить заявку", "Обо мне"], ["Перейти на сайт", "Контакты"], ["Помощник"]],
+    "keyboard": [["Услуги и цены", "Портфолио"], ["Оставить заявку", "Обо мне"], ["Перейти на сайт", "Контакты"], ["Пробная задача", "Помощник"]],
     "resize_keyboard": True,
 }
 CANCEL = {"keyboard": [["Отмена"]], "resize_keyboard": True}
@@ -128,6 +128,11 @@ class Store:
                 FOREIGN KEY(request_id) REFERENCES requests(id)
             );
         """)
+        columns = {row[1] for row in self.db.execute("PRAGMA table_info(requests)")}
+        if "request_format" not in columns:
+            self.db.execute("ALTER TABLE requests ADD COLUMN request_format TEXT NOT NULL DEFAULT 'standard'")
+        if "portfolio_interest" not in columns:
+            self.db.execute("ALTER TABLE requests ADD COLUMN portfolio_interest INTEGER NOT NULL DEFAULT 0")
         self.db.commit()
 
     def close(self):
@@ -232,6 +237,8 @@ class Bot:
         self.clock = clock
         self.site = json.loads((content / "site.json").read_text())
         self.services = json.loads((content / "services.json").read_text())
+        pilot_path = content / "pilot.json"
+        self.pilot = json.loads((pilot_path if pilot_path.exists() else ROOT / "content/pilot.json").read_text())
         self.by_id = {service["id"]: service for service in self.services}
         self.by_name = {service["name"]: service for service in self.services}
         self.website = self.site["base_url"].rstrip("/")
@@ -246,20 +253,31 @@ class Bot:
     def reply(self, chat, text, keyboard=None):
         self.store.enqueue(chat, text, self.main if keyboard is None else keyboard)
 
-    def start_request(self, chat, source, service_id=None):
+    def start_request(self, chat, source, service_id=None, request_format="standard"):
         if not self.owner:
             self.store.clear_session(chat)
             self.reply(chat, "Приём заявок через бота ещё настраивается. Пока напишите Трофиму: " + self.site["telegram"])
             return
-        data = {"source": source}
+        data = {"source": source, "request_format": request_format, "portfolio_interest": False}
         if service_id in self.by_id:
             data["service_id"] = service_id
             self.store.save_session(chat, "details", data, int(self.clock()))
-            self.reply(chat, "Услуга: " + self.by_id[service_id]["name"] + ".\nОпишите задачу и желаемый результат (10–1500 символов).", CANCEL)
+            self.reply(chat, "Услуга: " + self.by_id[service_id]["name"] + ".\nОпишите задачу и желаемый результат (10–1500 символов). Можете указать желаемый бюджет.", CANCEL)
         else:
             self.store.save_session(chat, "service", data, int(self.clock()))
             keyboard = {"keyboard": [[s["name"]] for s in self.services] + [["Другое", "Отмена"]], "resize_keyboard": True}
             self.reply(chat, "Какую задачу вы хотите обсудить? Выберите услугу.", keyboard)
+
+    def _pilot_info(self, chat):
+        self.reply(chat, self.pilot["headline"] + "\n\n" + self.pilot["intro"] + "\n\n" + self.pilot["terms"] + "\n\n" + self.pilot["continuation"] + "\n\n" + self.pilot["portfolio"] + "\n\nНажмите «Пробная задача», чтобы обсудить свой вариант.")
+
+    def _review(self, chat, data):
+        service = self.by_id.get(data["service_id"], {"name": "Другое"})
+        pilot = data.get("request_format") == "pilot"
+        extra = "\nФормат: пробная задача. Условия согласуются индивидуально." if pilot else ""
+        if pilot:
+            extra += "\nПортфолио: " + ("готов(а) обсудить кейс" if data.get("portfolio_interest") else "без запроса на обсуждение кейса") + ". Публикация отдельно согласуется."
+        self.reply(chat, "Проверьте заявку:\n\nУслуга: " + service["name"] + extra + "\nЗадача: " + data["details"] + "\nКонтакт: " + data["contact"] + "\n\nНажимая «Отправить заявку», вы передаёте эти данные Трофиму для ответа по заявке.", CONFIRM)
 
     def process(self, update):
         identifier = update.get("update_id")
@@ -317,9 +335,17 @@ class Bot:
         if command == "/status" and chat == self.owner:
             self.reply(chat, "Состояние приёма заявок: " + json.dumps(self.store.counts(), ensure_ascii=False))
             return
+        if command == "/pilot" or text == "Пробная задача":
+            self._pilot_info(chat)
+            self.start_request(chat, "bot_pilot", request_format="pilot")
+            return
         if command == "/start":
             self.store.clear_session(chat)
             payload = text.split(maxsplit=1)[1] if len(text.split(maxsplit=1)) == 2 else ""
+            if payload == "pilot" or (payload.startswith("pilot_") and payload[6:] in self.by_id):
+                self._pilot_info(chat)
+                self.start_request(chat, "site_pilot", payload[6:] if payload.startswith("pilot_") else None, request_format="pilot")
+                return
             if payload == "site":
                 self.start_request(chat, "site")
                 return
@@ -360,7 +386,7 @@ class Bot:
                 self.reply(chat, "Выберите услугу кнопкой или нажмите «Отмена».", {"keyboard": [[s["name"]] for s in self.services] + [["Другое", "Отмена"]], "resize_keyboard": True})
                 return
             self.store.save_session(chat, "details", data, now)
-            self.reply(chat, "Опишите задачу и желаемый результат (10–1500 символов).", CANCEL)
+            self.reply(chat, "Опишите задачу и желаемый результат (10–1500 символов). Можете указать желаемый бюджет.", CANCEL)
         elif state == "details":
             if not 10 <= len(text) <= 1500:
                 self.reply(chat, "Нужно текстовое описание от 10 до 1500 символов. Не указывайте пароли, ключи и платёжные данные.", CANCEL)
@@ -379,12 +405,23 @@ class Bot:
                 self.reply(chat, "Укажите контакт одной строкой (5–160 символов): @имя, email или телефон.", CANCEL)
                 return
             data["contact"] = text
+            if data.get("request_format") == "pilot":
+                self.store.save_session(chat, "portfolio", data, now)
+                self.reply(chat, "Хотите обсудить оформление результата как кейса? Это только интерес к обсуждению. Материалы, имя и данные можно будет публиковать лишь по отдельной договорённости после работы.",
+                           {"keyboard": [["Можно обсудить кейс"], ["Без обсуждения кейса", "Отмена"]], "resize_keyboard": True})
+            else:
+                self.store.save_session(chat, "confirm", data, now)
+                self._review(chat, data)
+        elif state == "portfolio":
+            if text not in ("Можно обсудить кейс", "Без обсуждения кейса"):
+                self.reply(chat, "Выберите «Можно обсудить кейс» или «Без обсуждения кейса».", {"keyboard": [["Можно обсудить кейс"], ["Без обсуждения кейса", "Отмена"]], "resize_keyboard": True})
+                return
+            data["portfolio_interest"] = text == "Можно обсудить кейс"
             self.store.save_session(chat, "confirm", data, now)
-            service = self.by_id.get(data["service_id"], {"name": "Другое"})
-            self.reply(chat, "Проверьте заявку:\n\nУслуга: " + service["name"] + "\nЗадача: " + data["details"] + "\nКонтакт: " + text + "\n\nНажимая «Отправить заявку», вы передаёте эти данные Трофиму для ответа по заявке.", CONFIRM)
+            self._review(chat, data)
         elif state == "confirm":
             if text == "Изменить заявку":
-                self.store.save_session(chat, "details", {"service_id": data["service_id"], "source": data["source"]}, now)
+                self.store.save_session(chat, "details", {key: data[key] for key in ("service_id", "source", "request_format", "portfolio_interest") if key in data}, now)
                 self.reply(chat, "Напишите новое описание задачи (10–1500 символов).", CANCEL)
                 return
             if text != "Отправить заявку":
@@ -395,21 +432,26 @@ class Bot:
                 self.reply(chat, "Приём заявок временно недоступен. Напишите Трофиму: " + self.site["telegram"])
                 return
             count = self.store.db.execute("SELECT COUNT(*) FROM requests WHERE chat_id=? AND created>?", (chat, now - 86400)).fetchone()[0]
-            if count >= 3:
-                self.reply(chat, "За сутки уже оформлено три заявки. Для уточнений напишите Трофиму: " + self.site["telegram"])
+            limit = 10 if chat == self.owner else 3
+            if count >= limit:
+                self.reply(chat, "За сутки уже оформлено " + ("десять заявок" if limit == 10 else "три заявки") + ". Для уточнений напишите Трофиму: " + self.site["telegram"])
                 return
             cursor = self.store.db.execute(
-                "INSERT INTO requests (update_id,created,chat_id,username,service_id,details,contact,source) VALUES (?,?,?,?,?,?,?,?)",
-                (identifier, now, chat, str(user.get("username", ""))[:64], data["service_id"], data["details"], data["contact"], data["source"]),
+                "INSERT INTO requests (update_id,created,chat_id,username,service_id,details,contact,source,request_format,portfolio_interest) VALUES (?,?,?,?,?,?,?,?,?,?)",
+                (identifier, now, chat, str(user.get("username", ""))[:64], data["service_id"], data["details"], data["contact"], data["source"], data.get("request_format", "standard"), int(bool(data.get("portfolio_interest", False)))),
             )
             request_id = cursor.lastrowid
             service = self.by_id.get(data["service_id"], {"name": "Другое"})
+            pilot = data.get("request_format") == "pilot"
+            format_note = "\nФормат: пробная задача; объём, срок и стоимость нужно согласовать." if pilot else "\nФормат: обычная задача."
+            if pilot:
+                format_note += "\nПортфолио: " + ("готов(а) обсудить кейс" if data.get("portfolio_interest") else "не запрошено") + ". Это не разрешение на публикацию."
             self.store.enqueue(
                 self.owner,
-                f"Новая заявка №{request_id}\nУслуга: " + service["name"] + "\nЗадача: " + data["details"] + "\nКонтакт: " + data["contact"] + "\nTelegram: " + ("@" + user["username"] if user.get("username") else "публичное имя не указано") + "\nИсточник: " + data["source"],
+                f"Новая заявка №{request_id}\nУслуга: " + service["name"] + format_note + "\nЗадача: " + data["details"] + "\nКонтакт: " + data["contact"] + "\nTelegram: " + ("@" + user["username"] if user.get("username") else "публичное имя не указано") + "\nИсточник: " + data["source"],
                 request_id=request_id,
             )
-            self.reply(chat, f"Заявка №{request_id} сохранена и поставлена в очередь уведомлений Трофиму. Это не подтверждение прочтения. Если вопрос срочный: " + self.site["telegram"])
+            self.reply(chat, f"Заявка №{request_id} сохранена и поставлена в очередь уведомлений Трофиму. Это не подтверждение прочтения. Если вопрос срочный: " + self.site["telegram"] + ("\n\nПробная задача: состав, срок и стоимость ещё предстоит согласовать. Продолжение и публикация результата обсуждаются отдельно." if pilot else ""))
             self.store.clear_session(chat)
         else:
             self._assist(chat, text)
@@ -421,6 +463,9 @@ class Bot:
     def _assist(self, chat, text):
         """Answer from published site facts; never invent model-generated facts."""
         query = text.casefold().replace("ё", "е")
+        if any(word in query for word in ("пробн", "тестов", "попробовать", "для портфолио")):
+            self._pilot_info(chat)
+            return
         if any(value in query for value in ("кто ты", "что умеешь", "чем поможешь")):
             self.reply(chat, "Я помощник Трофима по услугам, ценам и заявкам. Расскажу о сайте и работах, помогу подобрать направление. Например: «Нужен сайт для мастерской» или «Сколько стоит автоматизация?»")
             return
@@ -430,7 +475,15 @@ class Bot:
         if any(value in query for value in ("портфолио", "примеры работ", "посмотреть работы")):
             self.reply(chat, "Портфолио с задачами и описанием вклада Трофима: " + self.website + "/portfolio.html")
             return
+        if any(word in query for word in ("бюджет", "предложить цену")):
+            self.reply(chat, "Опишите желаемый результат и предложите бюджет. Трофим подберёт подходящий объём и согласует стоимость до начала работы. Базовые сайты-визитки и настройка Telegram-бота — от 10 000 ₽. Нажмите «Оставить заявку» или выберите пробную задачу.")
+            return
+        if "telegram-bots" in self.by_id and any(word in query for word in ("бот", "мини-прилож")) and any(word in query for word in ("бесплат", "бесконеч", "подписк", "ежемесяч", "месяц")):
+            service = self.by_id["telegram-bots"]
+            self.reply(chat, "Базовая настройка Telegram-бота и мини-приложения — " + service["price"] + ", разовая работа под ваш стиль.\n\n" + service["separate"] + "\n\nБазовые меню и заявки могут работать без платной AI-модели. Точный состав и ваш бюджет обсудим до начала.")
+            return
         tags = {
+            "telegram-bots": ("бот", "мини-прилож", "миниприлож"),
             "ecosystem": ("инфраструктур", "экосистем"),
             "ai-agents": ("ai-агент", "ии-агент", "ai агент", "ии агент", "ассистент"),
             "automation": ("автоматизац", "crm", "бот"),
@@ -468,6 +521,10 @@ class Bot:
             if not isinstance(packet, dict) or type(packet.get("version")) is not int or packet["version"] != 1 or packet.get("type") != "request" or packet.get("consent") is not True:
                 raise ValueError
             service_id, details, contact = (packet.get(name) for name in ("service_id", "details", "contact"))
+            request_format = packet.get("request_format", "standard")
+            portfolio_interest = packet.get("portfolio_interest", False)
+            if not isinstance(request_format, str) or request_format not in ("standard", "pilot") or type(portfolio_interest) is not bool or (request_format == "standard" and portfolio_interest):
+                raise ValueError
             if not isinstance(service_id, str) or service_id not in {*self.by_id, "other"}:
                 raise ValueError
             if not isinstance(details, str) or not 10 <= len(details.strip()) <= 1500:
@@ -480,7 +537,7 @@ class Bot:
         if not self.owner:
             self.reply(chat, "Приём заявок пока настраивается. Напишите Трофиму: " + self.site["telegram"])
             return
-        data = {"service_id": service_id, "details": details.strip(), "contact": contact.strip(), "source": "miniapp"}
+        data = {"service_id": service_id, "details": details.strip(), "contact": contact.strip(), "source": "miniapp", "request_format": request_format, "portfolio_interest": portfolio_interest}
         self.store.save_session(chat, "confirm", data, now)
         # The Mini App's explicit submit button is the confirmation. Reuse the
         # same transactional intake, rate limit and notifications as chat forms.

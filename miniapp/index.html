@@ -7,9 +7,9 @@
   <meta name="description" content="Услуги Трофима Мокрова: выберите задачу, посмотрите стоимость и оставьте заявку в Telegram.">
   <title>Трофим · услуги и заявки</title>
   <link rel="icon" href="../logo.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="app.css">
+  <link rel="stylesheet" href="app.css?v=20261018-pilot-bots">
   <script id="telegram-sdk" src="https://telegram.org/js/telegram-web-app.js" async referrerpolicy="no-referrer"></script>
-  <script src="app.js" defer></script>
+  <script src="app.js?v=20261018-pilot-bots" defer></script>
 </head>
 <body>
   <header class="topbar">
@@ -20,6 +20,7 @@
     <p id="context-note" class="notice" role="status">Загружаем услуги…</p>
     <section id="services-view" aria-labelledby="catalog-title">
       <div class="intro"><span class="eyebrow">Из идеи — в работающий проект</span><h1 id="catalog-title">Что сделаем<br>для вашей задачи?</h1><p>Выберите направление. Состав, стоимость и сроки уточним до начала работы.</p></div>
+      <section id="pilot-offer" class="pilot-offer" hidden aria-labelledby="pilot-title"><span class="eyebrow">Можно начать с малого</span><h2 id="pilot-title"></h2><p id="pilot-intro"></p><p id="pilot-terms"></p><details><summary>Примеры и портфолио</summary><ul id="pilot-examples"></ul><p id="pilot-continuation"></p><p id="pilot-portfolio"></p></details><button id="choose-pilot" class="button full" type="button" disabled>Обсудить пробную задачу →</button></section>
       <div class="section-heading"><h2>Услуги и цены</h2><span id="service-count"></span></div>
       <div id="catalog" class="catalog" aria-live="polite"></div>
       <button id="choose-other" class="button secondary full" type="button" disabled>У меня другая задача →</button>
@@ -28,16 +29,20 @@
     <section id="request-view" hidden aria-labelledby="request-title">
       <div class="intro compact"><span class="eyebrow">Обсудим ваш проект</span><h1 id="request-title" tabindex="-1">Расскажите<br>о задаче.</h1><p>Трофим получит заявку и сможет ответить по указанному контакту.</p></div>
       <form id="request-form">
+        <label for="request-format">Как начнём?</label><select id="request-format" name="request-format"><option value="standard">Обычная задача</option><option value="pilot" id="pilot-format-option" disabled>Пробная задача — условия индивидуально</option></select>
+        <p id="pilot-form-note" class="notice" hidden></p>
         <label for="service">Направление</label><select id="service" name="service" required disabled><option value="">Выберите услугу</option></select>
-        <label for="details">Что хотите сделать?</label><textarea id="details" name="details" rows="5" minlength="10" maxlength="1500" required placeholder="Например: нужен сайт для мастерской с каталогом работ и заявками."></textarea>
+        <label for="details">Что хотите сделать?</label><textarea id="details" name="details" rows="5" minlength="10" maxlength="1500" required placeholder="Например: нужен сайт или бот для мастерской. Можно указать желаемый бюджет."></textarea>
         <div class="field-hint"><span>От 10 символов. Без паролей и ключей.</span><span id="details-count">0 / 1500</span></div>
-        <label for="contact">Как с вами связаться?</label><input id="contact" name="contact" type="text" minlength="5" maxlength="160" required autocomplete="off" placeholder="@имя, email или телефон">
+        <p class="fine">Можно предложить свой бюджет — согласуем подходящий объём до начала работы.</p><label for="contact">Как с вами связаться?</label><input id="contact" name="contact" type="text" minlength="5" maxlength="160" required autocomplete="off" placeholder="@имя, email или телефон">
+        <div id="portfolio-interest-option" hidden><label class="consent"><input id="portfolio-interest" type="checkbox"><span>Готов(а) обсудить результат как кейс для портфолио — необязательно.</span></label><p class="fine">Это только интерес к обсуждению. Публикация материалов, имени и данных отдельно согласуется после работы.</p></div>
         <label class="consent"><input id="consent" type="checkbox" required><span>Передаю описание и контакт Трофиму Мокрову для ответа по этой заявке.</span></label>
         <button class="button full" type="submit" id="review-button" disabled>Проверить заявку →</button>
       </form>
       <div id="review" class="review" hidden>
         <span class="eyebrow">Всё верно?</span><h2>Проверьте заявку</h2>
-        <dl><dt>Направление</dt><dd id="review-service"></dd><dt>Задача</dt><dd id="review-details"></dd><dt>Контакт</dt><dd id="review-contact"></dd></dl>
+        <dl><dt>Формат</dt><dd id="review-format"></dd><dt>Направление</dt><dd id="review-service"></dd><dt>Задача</dt><dd id="review-details"></dd><dt>Контакт</dt><dd id="review-contact"></dd><dt id="review-portfolio-label" hidden>Портфолио</dt><dd id="review-portfolio" hidden></dd></dl>
+        <p id="review-pilot-note" class="fine" hidden></p>
         <p class="fine">После отправки приложение закроется. Бот сообщит номер сохранённой заявки в чате.</p>
         <button id="send-button" class="button full" type="button">Отправить заявку</button>
         <button id="edit-button" class="button secondary full" type="button">Изменить</button>

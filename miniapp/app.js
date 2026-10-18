@@ -4,7 +4,7 @@
   const $ = id => document.getElementById(id);
   const state = {catalog: null, view: 'services', review: null, sending: false, telegram: null};
   const note = $('context-note'), status = $('form-status'), form = $('request-form');
-  const fields = {service: $('service'), details: $('details'), contact: $('contact')};
+  const fields = {service: $('service'), details: $('details'), contact: $('contact'), format: $('request-format')};
   function setStatus(text, error = false) {status.textContent = text; status.classList.toggle('error', error);}
   function canSend() {return state.telegram && state.telegram.platform && state.telegram.platform !== 'unknown';}
   function updateContext() {
@@ -27,11 +27,24 @@
     if (focus) $(view === 'services' ? 'catalog-title' : view + '-title').focus({preventScroll: true});
   }
   function edit() {state.review = null; $('review').hidden = true; form.hidden = false; setStatus(''); fields.details.focus();}
-  function choose(id = 'other') {if (!state.catalog) return; fields.service.value = id; edit(); showView('request');}
+  function updateFormat() {
+    const pilot = fields.format.value === 'pilot';
+    $('pilot-form-note').hidden = !pilot; $('portfolio-interest-option').hidden = !pilot;
+    if (!pilot) $('portfolio-interest').checked = false;
+    if (pilot && state.catalog && state.catalog.pilot) $('pilot-form-note').textContent = state.catalog.pilot.terms + ' ' + state.catalog.pilot.continuation;
+  }
+  function choose(id = 'other', requestFormat = null) {if (!state.catalog) return; fields.service.value = id; if (requestFormat) fields.format.value = requestFormat; updateFormat(); edit(); showView('request');}
   function link(element, url) {if (/^https:\/\//.test(url) || /^mailto:/.test(url)) element.href = url;}
   function render(catalog) {
     if (!catalog || !Array.isArray(catalog.services) || !catalog.site) throw new Error('catalog');
     state.catalog = catalog;
+    if (catalog.pilot) {
+      const pilot = catalog.pilot;
+      $('pilot-title').textContent = pilot.headline; $('pilot-intro').textContent = pilot.intro;
+      $('pilot-terms').textContent = pilot.terms; $('pilot-continuation').textContent = pilot.continuation; $('pilot-portfolio').textContent = pilot.portfolio;
+      for (const example of pilot.examples) {const li = document.createElement('li'); li.textContent = example; $('pilot-examples').append(li);}
+      $('pilot-offer').hidden = false; $('choose-pilot').disabled = false; $('pilot-format-option').disabled = false;
+    }
     for (const [index, service] of catalog.services.entries()) {
       const card = document.createElement('article'); card.className = 'service-card';
       const number = document.createElement('span'); number.className = 'card-number'; number.textContent = String(index + 1).padStart(2, '0') + ' / НАПРАВЛЕНИЕ';
@@ -42,6 +55,7 @@
       const details = document.createElement('details'), summary = document.createElement('summary'); summary.textContent = 'Что входит'; details.append(summary);
       const list = document.createElement('ul');
       for (const item of service.includes || []) {const li = document.createElement('li'); li.textContent = item; list.append(li);} details.append(list);
+      for (const text of [service.result, service.extra, service.separate]) {if (text) {const p = document.createElement('p'); p.textContent = text; details.append(p);}}
       const button = document.createElement('button'); button.className = 'button full'; button.type = 'button'; button.textContent = 'Обсудить задачу →'; button.addEventListener('click', () => choose(service.id));
       card.append(number, title, audience, price, details, button); $('catalog').append(card);
       const option = document.createElement('option'); option.value = service.id; option.textContent = service.name; fields.service.append(option);
@@ -67,14 +81,20 @@
   document.querySelectorAll('[data-view]').forEach(button => button.addEventListener('click', () => showView(button.dataset.view)));
   document.querySelector('.brand').addEventListener('click', event => {event.preventDefault(); showView('services');}); $('catalog-title').tabIndex = -1;
   $('choose-other').addEventListener('click', () => choose()); $('contact-request').addEventListener('click', () => choose()); $('edit-button').addEventListener('click', edit);
+  $('choose-pilot').addEventListener('click', () => choose('other', 'pilot')); fields.format.addEventListener('change', updateFormat);
   fields.details.addEventListener('input', () => {$('details-count').textContent = fields.details.value.length + ' / 1500';});
   form.addEventListener('submit', event => {
     event.preventDefault(); if (!state.catalog || !form.reportValidity()) return;
     const details = fields.details.value.trim(), contact = fields.contact.value.trim();
     if (details.length < 10 || contact.length < 5 || /[\r\n]/.test(contact) || !/[\p{L}\p{N}]/u.test(contact)) {setStatus('Укажите описание от 10 символов и контакт одной строкой.', true); return;}
-    const data = {version: 1, type: 'request', consent: true, service_id: fields.service.value, details, contact};
+    const data = {version: 1, type: 'request', consent: true, service_id: fields.service.value, details, contact, request_format: fields.format.value, portfolio_interest: fields.format.value === 'pilot' && $('portfolio-interest').checked};
     if (new TextEncoder().encode(JSON.stringify(data)).length > 4096) {setStatus('Описание слишком объёмное для Telegram. Сократите его и попробуйте снова.', true); return;}
     state.review = data; $('review-service').textContent = fields.service.options[fields.service.selectedIndex].text;
+    const pilot = data.request_format === 'pilot';
+    $('review-format').textContent = pilot ? 'Пробная задача — условия индивидуально' : 'Обычная задача';
+    $('review-portfolio-label').hidden = !pilot; $('review-portfolio').hidden = !pilot; $('review-pilot-note').hidden = !pilot;
+    $('review-portfolio').textContent = data.portfolio_interest ? 'Готов(а) обсудить кейс. Разрешение на публикацию ещё не дано.' : 'Без запроса на обсуждение кейса.';
+    if (pilot) $('review-pilot-note').textContent = state.catalog.pilot.terms + ' ' + state.catalog.pilot.continuation;
     $('review-details').textContent = details; $('review-contact').textContent = contact;
     form.hidden = true; $('review').hidden = false; setStatus(canSend() ? '' : 'Отправка доступна при открытии приложения кнопкой в боте.'); updateContext(); $('review').scrollIntoView({block: 'start'});
   });
