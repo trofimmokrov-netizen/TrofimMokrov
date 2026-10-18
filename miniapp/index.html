@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#16201c">
+  <meta name="description" content="Услуги Трофима Мокрова: выберите задачу, посмотрите стоимость и оставьте заявку в Telegram.">
+  <title>Трофим · услуги и заявки</title>
+  <link rel="icon" href="../logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="app.css">
+  <script id="telegram-sdk" src="https://telegram.org/js/telegram-web-app.js" async referrerpolicy="no-referrer"></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#services" aria-label="Трофим — услуги"><img src="../logo.svg" width="36" height="36" alt=""><span>Трофим<small>Сайты · AI · Автоматизация</small></span></a>
+    <span class="badge">Mini App</span>
+  </header>
+  <main>
+    <p id="context-note" class="notice" role="status">Загружаем услуги…</p>
+    <section id="services-view" aria-labelledby="catalog-title">
+      <div class="intro"><span class="eyebrow">Из идеи — в работающий проект</span><h1 id="catalog-title">Что сделаем<br>для вашей задачи?</h1><p>Выберите направление. Состав, стоимость и сроки уточним до начала работы.</p></div>
+      <div class="section-heading"><h2>Услуги и цены</h2><span id="service-count"></span></div>
+      <div id="catalog" class="catalog" aria-live="polite"></div>
+      <button id="choose-other" class="button secondary full" type="button" disabled>У меня другая задача →</button>
+      <p class="fine">Цены ориентировочные. Итоговая стоимость зависит от согласованного объёма.</p>
+    </section>
+    <section id="request-view" hidden aria-labelledby="request-title">
+      <div class="intro compact"><span class="eyebrow">Обсудим ваш проект</span><h1 id="request-title" tabindex="-1">Расскажите<br>о задаче.</h1><p>Трофим получит заявку и сможет ответить по указанному контакту.</p></div>
+      <form id="request-form">
+        <label for="service">Направление</label><select id="service" name="service" required disabled><option value="">Выберите услугу</option></select>
+        <label for="details">Что хотите сделать?</label><textarea id="details" name="details" rows="5" minlength="10" maxlength="1500" required placeholder="Например: нужен сайт для мастерской с каталогом работ и заявками."></textarea>
+        <div class="field-hint"><span>От 10 символов. Без паролей и ключей.</span><span id="details-count">0 / 1500</span></div>
+        <label for="contact">Как с вами связаться?</label><input id="contact" name="contact" type="text" minlength="5" maxlength="160" required autocomplete="off" placeholder="@имя, email или телефон">
+        <label class="consent"><input id="consent" type="checkbox" required><span>Передаю описание и контакт Трофиму Мокрову для ответа по этой заявке.</span></label>
+        <button class="button full" type="submit" id="review-button" disabled>Проверить заявку →</button>
+      </form>
+      <div id="review" class="review" hidden>
+        <span class="eyebrow">Всё верно?</span><h2>Проверьте заявку</h2>
+        <dl><dt>Направление</dt><dd id="review-service"></dd><dt>Задача</dt><dd id="review-details"></dd><dt>Контакт</dt><dd id="review-contact"></dd></dl>
+        <p class="fine">После отправки приложение закроется. Бот сообщит номер сохранённой заявки в чате.</p>
+        <button id="send-button" class="button full" type="button">Отправить заявку</button>
+        <button id="edit-button" class="button secondary full" type="button">Изменить</button>
+      </div>
+      <p id="form-status" role="status" aria-live="polite" class="form-status"></p>
+      <a id="open-bot" class="text-link" href="https://t.me/TrofimAI_bot?start=app" target="_blank" rel="noopener noreferrer">Открыть @TrofimAI_bot ↗</a>
+    </section>
+    <section id="contact-view" hidden aria-labelledby="contact-title">
+      <div class="intro compact"><span class="eyebrow">Напрямую с Трофимом</span><h1 id="contact-title" tabindex="-1">Начнём<br>с разговора.</h1><p>Можно оставить заявку здесь или написать лично.</p></div>
+      <div class="contact-card"><h2>Трофим Мокров</h2><p>Сайты, AI-инструменты, контент и автоматизация для бизнеса и личных задач.</p><a id="personal-link" class="button full" href="https://t.me/TrofimMokrov" target="_blank" rel="noopener noreferrer">Написать лично ↗</a><a id="email-link" class="button secondary full" href="mailto:trofimmokrov@gmail.com">Написать на почту</a><a id="portfolio-link" class="text-link" href="https://trofimmokrov-netizen.github.io/TrofimMokrov/portfolio.html" target="_blank" rel="noopener noreferrer">Посмотреть портфолио ↗</a></div>
+      <button class="button full" type="button" id="contact-request" disabled>Оставить заявку →</button>
+    </section>
+    <noscript><p class="notice">Для приложения нужен JavaScript. Можно <a href="https://t.me/TrofimMokrov">написать Трофиму лично</a>.</p></noscript>
+  </main>
+  <nav class="tabs" aria-label="Разделы приложения"><button type="button" data-view="services" aria-current="page"><span aria-hidden="true">◈</span>Услуги</button><button type="button" data-view="request"><span aria-hidden="true">＋</span>Заявка</button><button type="button" data-view="contact"><span aria-hidden="true">↗</span>Контакты</button></nav>
+</body>
+</html>
