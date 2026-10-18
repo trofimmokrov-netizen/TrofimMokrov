@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://trofimmokrov-netizen.github.io/TrofimMokrov/sitemap.xml
