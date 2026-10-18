@@ -10,6 +10,7 @@ from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit
 from core import Store,Problem,read_csv,yandex_search
+from research import osm_search
 ROOT=Path(__file__).resolve().parent
 
 def make_server(store,port=8090):
@@ -46,7 +47,9 @@ def make_server(store,port=8090):
     elif path=='/api/search':
      query=str(data.get('query','')).strip();city=str(data.get('city','')).strip()
      if not query or not city:raise Problem('Укажите сферу и город / регион.')
-     result=store.import_rows(yandex_search(query,city,data.get('limit',10)))
+     if data.get('provider')=='osm':rows=osm_search(query,city,data.get('limit',10),data.get('bbox','55.49,37.32,55.96,37.95'))
+     else:rows=yandex_search(query,city,data.get('limit',10))
+     result=store.import_rows(rows)
     elif path=='/api/leads':result=store.import_rows([data])
     else:
      parts=path.strip('/').split('/')
@@ -54,6 +57,7 @@ def make_server(store,port=8090):
      identifier=int(parts[2]);action=parts[3]
      if action=='update':result=store.update(identifier,data)
      elif action=='check':result=store.check(identifier)
+     elif action=='research':result=store.research(identifier)
      elif action=='draft':result=store.draft(identifier)
      elif action=='approve':result=store.approve(identifier)
      elif action=='send':result=store.send(identifier)

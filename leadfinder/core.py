@@ -120,6 +120,7 @@ class Store:
    CREATE TABLE IF NOT EXISTS suppression(email TEXT PRIMARY KEY, created_at TEXT NOT NULL);
    CREATE TABLE IF NOT EXISTS events(id INTEGER PRIMARY KEY, lead_id INTEGER, kind TEXT NOT NULL, note TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL);
    ''')
+   if 'research_json' not in {r['name'] for r in db.execute('PRAGMA table_info(leads)')}:db.execute("ALTER TABLE leads ADD COLUMN research_json TEXT NOT NULL DEFAULT '{}'")
  @contextmanager
  def connect(self):
   db=sqlite3.connect(self.path,timeout=15);db.row_factory=sqlite3.Row
@@ -198,6 +199,16 @@ class Store:
   lead=self.get(identifier)
   if not lead['website']:raise Problem('Сайт не указан. Проверьте компанию вручную; не делайте вывод только по карточке.')
   return self.update(identifier,check_website(lead['website']))
+ def research(self,identifier):
+  from research import research_site
+  lead=self.get(identifier)
+  if lead['state'] in ('sending','sent','unknown','blocked'):raise Problem('Разбор недоступен для этой записи.')
+  if not lead['website']:raise Problem('Адрес сайта не указан. Возьмите контакты из открытого источника или добавьте известный адрес; отсутствие сайта не подтверждается автоматически.')
+  result=research_site(lead['website'])
+  with LOCK,self.connect() as db:
+   cursor=db.execute("UPDATE leads SET research_json=?,state='draft',approved_at=NULL,updated_at=? WHERE id=? AND state NOT IN ('sending','sent','unknown','blocked')",(json.dumps(result,ensure_ascii=False),now(),identifier))
+   if not cursor.rowcount:raise Problem('Запись изменилась во время разбора. Обновите страницу.')
+  return self.get(identifier)
  def send(self,identifier,deliver=None):
   config=smtp_config() if deliver is None else None
   with LOCK:
