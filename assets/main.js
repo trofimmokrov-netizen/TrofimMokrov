@@ -31,7 +31,7 @@
   animation.finished.then(() => active.delete(animation), () => active.delete(animation));
   return animation;
  };
- const headings = document.querySelectorAll('main h1, .section-head h2, .contact-banner h2, .dark > h2, .visual-copy h2, .split > div > h2');
+ const headings = document.querySelectorAll('main h1, .section-head h2, .contact-banner h2, .dark > h2, .visual-copy h2, .split > div > h2, .ai-spotlight h2');
  const revealHeading = heading => {
   if (reduced.matches || !heading.animate) return;
   const walker = document.createTreeWalker(heading, NodeFilter.SHOW_TEXT);
