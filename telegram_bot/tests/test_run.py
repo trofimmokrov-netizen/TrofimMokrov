@@ -100,6 +100,17 @@ class RunnerTests(unittest.TestCase):
             self.assertEqual(caught.exception.code, 1)
             self.assertIn("уже работает процесс", stderr.getvalue())
 
+    def test_temporary_telegram_read_error_does_not_stop_worker(self):
+        with patch.object(run.time, 'sleep') as pause:
+            code, calls, _, stderr, _ = self.invoke(responses=[
+                {"username": "TrofimAI_bot"}, {"url": ""}, True,
+                run.TelegramRejected(503), [], KeyboardInterrupt(),
+            ])
+        self.assertEqual(code, 0)
+        self.assertEqual([call.args[0] for call in calls].count('getUpdates'), 3)
+        pause.assert_called_once_with(5)
+        self.assertIn('Временная ошибка Telegram', stderr)
+
 
 if __name__ == "__main__":
     unittest.main()

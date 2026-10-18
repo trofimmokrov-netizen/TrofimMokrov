@@ -84,9 +84,13 @@ def main():
                 print("Нет подтверждённого ответа Telegram; чтение обновлений будет повторено. Неопределённые отправки не повторяются.", file=sys.stderr, flush=True)
                 time.sleep(5)
             except TelegramRejected as error:
-                if error.code != 429:
+                if error.code == 429:
+                    time.sleep(min(error.retry_after or 30, 60))
+                elif 500 <= error.code < 600:
+                    print("Временная ошибка Telegram при чтении обновлений; повтор через 5 секунд.", file=sys.stderr, flush=True)
+                    time.sleep(5)
+                else:
                     raise
-                time.sleep(min(error.retry_after or 30, 60))
     except KeyboardInterrupt:
         return 0
     except (ValueError, DeliveryUnknown, TelegramRejected) as error:

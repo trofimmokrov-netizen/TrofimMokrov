@@ -51,7 +51,8 @@ class TelegramAPI:
         self._chat_calls = {}
 
     def call(self, method: str, **payload: Any) -> Any:
-        if method not in {"getMe", "getWebhookInfo", "getUpdates", "sendMessage", "setMyCommands"}:
+        if method not in {"getMe", "getWebhookInfo", "getUpdates", "sendMessage", "setMyCommands",
+                          "setMyDescription", "getMyDescription", "setMyShortDescription", "getMyShortDescription"}:
             raise ValueError("Неизвестный метод Telegram API.")
         if method == "sendMessage":
             now = time.monotonic()
