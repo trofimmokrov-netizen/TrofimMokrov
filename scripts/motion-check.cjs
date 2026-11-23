@@ -26,25 +26,39 @@ const pages = [
       const animate = Element.prototype.animate;
       window.entrances = [];
       Element.prototype.animate = function (keyframes, options) {
-        window.entrances.push({element: this, options});
+        window.entrances.push({element: this, keyframes, options});
         return animate.call(this, keyframes, options);
       };
     });
 
     await page.goto(base);
     await page.waitForFunction(() => window.entrances.some(({element}) => element.matches('.hero-copy > .lead')));
-    const homeTitle = page.getByRole('heading', {level: 1, name: 'Трофим Мокров'});
+    const homeTitle = page.getByRole('heading', {level: 1});
     assert(await homeTitle.isVisible());
+    const homeTitleText = await homeTitle.textContent();
     const intro = await page.evaluate(() => {
-      const delay = selector => window.entrances.find(({element}) => element.matches(selector)).options.delay;
+      const heading = window.entrances.find(({element}) => element.matches('.hero-copy > h1'));
+      const lead = window.entrances.find(({element}) => element.matches('.hero-copy > .lead'));
       return {
-        titleDelay: delay('.hero-copy > h1'),
-        leadDelay: delay('.hero-copy > .lead'),
+        titleDelay: heading.options.delay,
+        leadDelay: lead.options.delay,
+        maskedHeading: heading.keyframes.every(frame => frame.clipPath),
         controlsMove: window.entrances.some(({element}) => element.matches('.hero-copy a, .hero-actions, .hero-copy')),
       };
     });
     assert(intro.titleDelay < intro.leadDelay, 'The home headline should enter before its description');
+    assert(intro.maskedHeading, 'The native home heading should use the text mask');
     assert.equal(intro.controlsMove, false, 'Hero links should stay in place');
+
+    const photo = page.locator('.hero-portrait img');
+    await photo.scrollIntoViewIfNeeded();
+    await page.waitForFunction(() => window.entrances.some(({element, keyframes}) =>
+      element.matches('.hero-portrait img') && keyframes[0].transform.startsWith('scale(')));
+
+    const service = page.locator('.home-service').first();
+    await service.scrollIntoViewIfNeeded();
+    await page.waitForFunction(() => window.entrances.some(({element}) => element.matches('.home-service .home-service-summary')));
+    assert.equal(await service.evaluate(card => card.getAnimations().length), 0, 'Service links should stay in place');
 
     const section = page.locator('[data-reveal]').last();
     const sectionHeading = section.locator('h2, h3').first();
@@ -89,11 +103,12 @@ const pages = [
 
     const plain = await browser.newPage({javaScriptEnabled: false, viewport: {width: 320, height: 844}});
     await plain.goto(base);
+    assert.equal(await plain.getByRole('heading', {level: 1}).textContent(), homeTitleText);
     assert(await plain.locator('h1').isVisible());
     assert(await plain.getByRole('navigation', {name: 'Основная навигация'}).isVisible());
     assert(await plain.locator('[data-reveal]').last().isVisible());
     assert.deepEqual(errors, []);
-    console.log('PASS: 28 responsive page checks, staggered text, one-time scroll motion, mobile menu, reduced-motion changes and no-JS fallback.');
+    console.log('PASS: 28 responsive page checks, masked heading, portrait and service text reveals, mobile menu, reduced motion and no-JS fallback.');
   } finally {
     await browser.close();
   }

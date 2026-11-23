@@ -92,18 +92,21 @@
   if (!('IntersectionObserver' in window) || !Element.prototype.animate) return;
   const introSelector = '.hero-copy, .page-heading';
   const sectionSelector = '[data-reveal], .section-head:not([data-reveal] *)';
-  const regionSelector = `${introSelector}, ${sectionSelector}, .hero-portrait`;
+  const regionSelector = `${introSelector}, ${sectionSelector}, .hero-portrait, .home-service`;
   const activeReveals = new Map();
+  const easeOut = 'cubic-bezier(.18,.8,.24,1)';
+  const rise = (distance, opacity) => [
+    {opacity, transform: `translateY(${distance}px)`},
+    {opacity: 1, transform: 'translateY(0)'},
+  ];
+  const headline = [
+    {opacity: .46, transform: 'translateY(14px)', clipPath: 'inset(12% -.24em 63% -.24em)'},
+    {opacity: 1, transform: 'translateY(0)', clipPath: 'inset(-.24em -.24em -.24em -.24em)'},
+  ];
 
-  function animateEntrance(element, region, {distance, opacity, duration, delay = 0}) {
+  function animateEntrance(element, region, frames, {duration, delay = 0}) {
     if (!element) return;
-    const animation = element.animate(
-      [
-        {opacity, transform: `translateY(${distance}px)`},
-        {opacity: 1, transform: 'translateY(0)'},
-      ],
-      {duration, delay, easing: 'cubic-bezier(.2,.7,.25,1)', fill: 'backwards'}
-    );
+    const animation = element.animate(frames, {duration, delay, easing: easeOut, fill: 'backwards'});
     activeReveals.set(animation, region);
     const forget = () => activeReveals.delete(animation);
     animation.addEventListener('finish', forget, {once: true});
@@ -114,22 +117,31 @@
     if (document.hidden || reducedMotion.matches || region.matches(':focus-within') ||
         region.closest(':target') || region.querySelector(':target')) return;
     if (region.matches(introSelector)) {
-      animateEntrance(region.querySelector(':scope > .eyebrow'), region, {distance: 7, opacity: .65, duration: 410});
-      animateEntrance(region.querySelector(':scope > h1'), region, {distance: 16, opacity: .48, duration: 620, delay: 45});
-      animateEntrance(region.querySelector(':scope > .lead'), region, {distance: 10, opacity: .64, duration: 560, delay: 125});
+      animateEntrance(region.querySelector(':scope > .eyebrow'), region, rise(6, .69), {duration: 360});
+      animateEntrance(region.querySelector(':scope > h1'), region, headline, {duration: 610, delay: 35});
+      animateEntrance(region.querySelector(':scope > .lead'), region, rise(9, .73), {duration: 520, delay: 125});
       return;
     }
     if (region.matches('.hero-portrait')) {
-      animateEntrance(region, region, {distance: 9, opacity: .73, duration: 550, delay: 70});
+      animateEntrance(region, region, rise(12, .74), {duration: 590, delay: 70});
+      animateEntrance(region.querySelector('img'), region, [
+        {transform: 'scale(.97)'},
+        {transform: 'scale(1)'},
+      ], {duration: 660, delay: 70});
+      return;
+    }
+    if (region.matches('.home-service')) {
+      animateEntrance(region.querySelector('h3, strong'), region, rise(5, .76), {duration: 360});
+      animateEntrance(region.querySelector('.home-service-summary'), region, rise(4, .8), {duration: 380, delay: 45});
       return;
     }
 
     const heading = region.querySelector('h2, h3');
     if (!heading) return;
-    animateEntrance(heading, region, {distance: 10, opacity: .55, duration: 510});
+    animateEntrance(heading, region, rise(10, .62), {duration: 470});
     const description = heading.nextElementSibling;
     if (description?.matches('p')) {
-      animateEntrance(description, region, {distance: 7, opacity: .72, duration: 475, delay: 65});
+      animateEntrance(description, region, rise(6, .76), {duration: 435, delay: 65});
     }
   }
 

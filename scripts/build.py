@@ -132,16 +132,20 @@ featured_ids=('websites','telegram-bots','business-system','automation','ai-agen
 services_by_id={service['id']:service for service in services}
 featured=''.join(
  f'''<a class="home-service" href="services.html#{service['id']}">
- <span><strong>{e(service['name'])}</strong><span class="home-service-summary">{e(service['summary'])}</span></span>
- <span class="home-service-price">{e(service['price'])}<span aria-hidden="true">↗</span></span></a>'''
+ <span class="home-service-icon" aria-hidden="true">{e(service['icon'])}</span>
+ <h3>{e(service['name'])}</h3>
+ <p class="home-service-summary">{e(service['summary'])}</p>
+ <span class="home-service-meta"><span class="home-service-price">{e(service['price'])}</span><span class="tile-arrow" aria-hidden="true">↗</span></span></a>'''
  for service in (services_by_id[key] for key in featured_ids)
 )
+featured_project=next(project for project in projects if project['slug']=='ksusha-epoxy')
+telegram_project_names=''.join(f'<li>{e(project["name"])}</li>' for project in telegram_projects)
 body=f'''
 <section class="hero" aria-labelledby="home-title">
  <div class="hero-copy">
   {eyebrow('Сайты · Telegram · Автоматизация')}
   <h1 id="home-title">{e(site['name'])}</h1>
-  <p class="lead">Создаю сайты и Telegram-ботов, настраиваю Битрикс24 и AI-инструменты для бизнеса. Помогу выбрать, с чего начать.</p>
+  <p class="lead">Разрабатываю сайты и Telegram-ботов, подключаю Битрикс24 и автоматизирую рутинные задачи бизнеса.</p>
   <div class="actions hero-actions">
    {form_action(p)}
    {telegram_action(secondary=True)}
@@ -149,20 +153,32 @@ body=f'''
   {social_links()}
  </div>
  <div class="hero-portrait">
-  <img src="{link(p,'assets/trofim-mokrov-portrait.jpg')}" width="1024" height="1536" alt="{e(site['name'])}" decoding="async" fetchpriority="high">
+  <img src="{link(p,'assets/trofim-mokrov-portrait-800.webp')}"
+   srcset="{link(p,'assets/trofim-mokrov-portrait-240.webp')} 240w, {link(p,'assets/trofim-mokrov-portrait-800.webp')} 800w"
+   sizes="(max-width: 600px) 76px, (max-width: 900px) 32vw, 380px"
+   width="800" height="1200" alt="{e(site['name'])}" decoding="async" fetchpriority="high">
  </div>
 </section>
 <section class="section home-services" aria-labelledby="home-services-title" data-reveal>
- <div class="section-head"><h2 id="home-services-title">Чем могу помочь</h2></div>
+ <div class="section-head"><h2 id="home-services-title">Чем могу помочь</h2><a class="text-link action-link" href="services.html">Все услуги ↗</a></div>
  <div class="home-service-list">{featured}</div>
- <a class="text-link action-link" href="services.html">Все услуги ↗</a>
 </section>
 <section class="section home-projects" aria-labelledby="home-projects-title" data-reveal>
- <div>
-  <h2 id="home-projects-title">Избранные проекты</h2>
-  <p>Примеры ботов и мини-приложений для Device Workshop, «Древесного замысла» и AIK BASE.</p>
+ <div class="section-head"><h2 id="home-projects-title">Избранные проекты</h2><a class="text-link action-link" href="portfolio.html">Все проекты ↗</a></div>
+ <div class="project-showcase">
+  <a class="project-feature" href="portfolio.html#{e(featured_project['slug'])}">
+   <div class="project-feature-media"><img src="{link(p,'assets/ksusha-site-cover.webp')}" width="896" height="653" alt="{e(featured_project['alt'])}" loading="lazy" decoding="async"></div>
+   <div class="project-feature-caption">
+    <div><h3>Сайт ZEMLYANOVVA EPOXY</h3><p>Коллекция авторских столов из дерева и смолы.</p></div><span class="tile-arrow" aria-hidden="true">↗</span>
+   </div>
+  </a>
+  <article class="project-cluster">
+   <span class="project-cluster-icon">{TELEGRAM_ICON}</span>
+   <h3>Боты и мини-приложения</h3>
+   <ul>{telegram_project_names}</ul>
+   <a class="text-link action-link" href="portfolio.html#telegram-projects">Проекты в Telegram ↗</a>
+  </article>
  </div>
- <a class="text-link action-link" href="portfolio.html#telegram-projects">Смотреть портфолио ↗</a>
 </section>
 '''
 body+=faq_section(faqs[:2]+faqs[-2:-1])+contact(p)

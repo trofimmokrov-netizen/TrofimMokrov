@@ -4,33 +4,44 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#16201c">
-  <meta name="description" content="Услуги Трофима Мокрова: посмотрите стоимость и откройте форму заявки на сайте.">
+  <meta name="description" content="Услуги Трофима Мокрова: выберите задачу, посмотрите стоимость и оставьте заявку через форму Битрикс24 прямо в приложении.">
   <title>Трофим · услуги и заявки</title>
   <link rel="icon" href="../logo.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="app.css?v=20261123-site-form">
+  <link rel="stylesheet" href="app.css?v=20261123-bitrix-in-app">
   <script id="telegram-sdk" src="https://telegram.org/js/telegram-web-app.js" async referrerpolicy="no-referrer"></script>
-  <script src="app.js?v=20261123-site-form" defer></script>
+  <script src="app.js?v=20261123-bitrix-in-app" defer></script>
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="#services-view" aria-label="Трофим — услуги"><img src="../logo.svg" width="36" height="36" alt=""><span>Трофим<small>Сайты · AI · Автоматизация</small></span></a>
+    <a class="brand" href="#services" aria-label="Трофим — услуги"><img src="../logo.svg" width="36" height="36" alt=""><span>Трофим<small>Сайты · AI · Автоматизация</small></span></a>
   </header>
   <main>
     <p id="context-note" class="notice" role="status">Загружаем услуги…</p>
     <section id="services-view" aria-labelledby="catalog-title">
-      <div class="intro"><h1 id="catalog-title" tabindex="-1">Что сделаем<br>для вашей задачи?</h1><p>Посмотрите услуги и цены. Заявки принимаю через форму на сайте.</p></div>
-      <section id="pilot-offer" class="pilot-offer" hidden aria-labelledby="pilot-title"><span class="eyebrow">Можно начать с малого</span><h2 id="pilot-title"></h2><p id="pilot-intro"></p><p id="pilot-terms"></p><details><summary>Примеры и портфолио</summary><ul id="pilot-examples"></ul><p id="pilot-continuation"></p><p id="pilot-portfolio"></p></details><p class="fine">При обсуждении уточните, что хотите начать с пробной задачи.</p><a id="choose-pilot" class="button full" href="../contact.html#request-form" data-request-link target="_blank" rel="noopener noreferrer">Обсудить пробную задачу ↗</a></section>
+      <div class="intro"><span class="eyebrow">Из идеи — в работающий проект</span><h1 id="catalog-title">Что сделаем<br>для вашей задачи?</h1><p>Выберите направление. Состав, стоимость и сроки уточним до начала работы.</p></div>
+      <section id="pilot-offer" class="pilot-offer" hidden aria-labelledby="pilot-title"><span class="eyebrow">Можно начать с малого</span><h2 id="pilot-title"></h2><p id="pilot-intro"></p><p id="pilot-terms"></p><details><summary>Примеры и портфолио</summary><ul id="pilot-examples"></ul><p id="pilot-continuation"></p><p id="pilot-portfolio"></p></details><button id="choose-pilot" class="button full" type="button" disabled>Обсудить пробную задачу →</button></section>
       <div class="section-heading"><h2>Услуги и цены</h2><span id="service-count"></span></div>
       <div id="catalog" class="catalog" aria-live="polite"></div>
-      <a id="choose-other" class="button secondary full" href="../contact.html#request-form" data-request-link target="_blank" rel="noopener noreferrer">У меня другая задача ↗</a>
+      <button id="choose-other" class="button secondary full" type="button">У меня другая задача →</button>
       <p class="fine">Цены ориентировочные. Итоговая стоимость зависит от согласованного объёма.</p>
     </section>
-    <section id="contact-view" hidden aria-labelledby="contact-title">
-      <div class="intro compact"><h1 id="contact-title" tabindex="-1">Связаться со мной</h1><p>Заполните форму на сайте или напишите лично.</p></div>
-      <div class="contact-card"><h2>Трофим Мокров</h2><a id="contact-request" class="button full" href="../contact.html#request-form" data-request-link target="_blank" rel="noopener noreferrer">Оставить заявку на сайте ↗</a><a id="personal-link" class="button secondary full" href="https://t.me/TrofimMokrov" data-telegram-link target="_blank" rel="noopener noreferrer">Написать в Telegram ↗</a><a id="email-link" class="button secondary full" href="mailto:trofimmokrov@gmail.com">Написать на почту</a><a id="portfolio-link" class="text-link" href="../portfolio.html" data-site-link target="_blank" rel="noopener noreferrer">Посмотреть портфолио ↗</a></div>
+    <section id="request-view" hidden aria-labelledby="request-title">
+      <div class="intro compact">
+        <h1 id="request-title" tabindex="-1">Оставить заявку</h1>
+        <p id="request-topic" hidden></p>
+      </div>
+      <div id="bitrix-form" class="bitrix-form">
+        <p id="request-form-status" class="notice" role="status">Загружаем форму Битрикс24…</p>
+        <button id="request-contact-fallback" class="button secondary full" type="button" hidden>Другие способы связи</button>
+      </div>
     </section>
-    <noscript><p class="notice">Для просмотра каталога нужен JavaScript. Можно <a href="https://t.me/TrofimMokrov">написать Трофиму в Telegram</a>.</p></noscript>
+    <section id="contact-view" hidden aria-labelledby="contact-title">
+      <div class="intro compact"><span class="eyebrow">Напрямую с Трофимом</span><h1 id="contact-title" tabindex="-1">Начнём<br>с разговора.</h1><p>Можно оставить заявку здесь или написать лично.</p></div>
+      <div class="contact-card"><h2>Трофим Мокров</h2><p>Сайты, AI-инструменты, контент и автоматизация для бизнеса и личных задач.</p><a id="personal-link" class="button full" href="https://t.me/TrofimMokrov" target="_blank" rel="noopener noreferrer">Написать лично ↗</a><a id="email-link" class="button secondary full" href="mailto:trofimmokrov@gmail.com">Написать на почту</a><a id="portfolio-link" class="text-link" href="https://trofimmokrov-netizen.github.io/TrofimMokrov/portfolio.html" target="_blank" rel="noopener noreferrer">Посмотреть портфолио ↗</a></div>
+      <button class="button full" type="button" id="contact-request">Оставить заявку →</button>
+    </section>
+    <noscript><p class="notice">Для формы и каталога нужен JavaScript. Можно <a href="https://t.me/TrofimMokrov">написать Трофиму лично</a>.</p></noscript>
   </main>
-  <nav class="tabs" aria-label="Разделы приложения"><button type="button" data-view="services" aria-current="page"><span aria-hidden="true">◈</span>Услуги</button><a id="tab-request" href="../contact.html#request-form" data-request-link target="_blank" rel="noopener noreferrer" aria-label="Оставить заявку на сайте"><span aria-hidden="true">↗</span>Заявка</a><button type="button" data-view="contact"><span aria-hidden="true">↗</span>Контакты</button></nav>
+  <nav class="tabs" aria-label="Разделы приложения"><button type="button" data-view="services" aria-current="page"><span aria-hidden="true">◈</span>Услуги</button><button type="button" data-view="request"><span aria-hidden="true">＋</span>Заявка</button><button type="button" data-view="contact"><span aria-hidden="true">↗</span>Контакты</button></nav>
 </body>
 </html>
