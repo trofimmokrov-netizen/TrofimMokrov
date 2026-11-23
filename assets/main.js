@@ -90,27 +90,47 @@
   }
 
   if (!('IntersectionObserver' in window) || !Element.prototype.animate) return;
+  const introSelector = '.hero-copy, .page-heading';
+  const sectionSelector = '[data-reveal], .section-head:not([data-reveal] *)';
+  const regionSelector = `${introSelector}, ${sectionSelector}, .hero-portrait`;
   const activeReveals = new Map();
 
-  function reveal(element) {
-    if (document.hidden || reducedMotion.matches || element.matches(':focus-within, :target') || element.querySelector(':target')) return;
-    const intro = element.matches('.hero-copy, .hero-portrait');
+  function animateEntrance(element, region, {distance, opacity, duration, delay = 0}) {
+    if (!element) return;
     const animation = element.animate(
       [
-        {opacity: intro ? .65 : .82, transform: `translateY(${intro ? 10 : 6}px)`},
+        {opacity, transform: `translateY(${distance}px)`},
         {opacity: 1, transform: 'translateY(0)'},
       ],
-      {
-        duration: intro ? 470 : 390,
-        delay: element.matches('.hero-portrait') ? 55 : 0,
-        easing: 'cubic-bezier(.2,.7,.25,1)',
-        fill: 'backwards',
-      }
+      {duration, delay, easing: 'cubic-bezier(.2,.7,.25,1)', fill: 'backwards'}
     );
-    activeReveals.set(element, animation);
-    const forget = () => activeReveals.delete(element);
+    activeReveals.set(animation, region);
+    const forget = () => activeReveals.delete(animation);
     animation.addEventListener('finish', forget, {once: true});
     animation.addEventListener('cancel', forget, {once: true});
+  }
+
+  function reveal(region) {
+    if (document.hidden || reducedMotion.matches || region.matches(':focus-within') ||
+        region.closest(':target') || region.querySelector(':target')) return;
+    if (region.matches(introSelector)) {
+      animateEntrance(region.querySelector(':scope > .eyebrow'), region, {distance: 7, opacity: .65, duration: 410});
+      animateEntrance(region.querySelector(':scope > h1'), region, {distance: 16, opacity: .48, duration: 620, delay: 45});
+      animateEntrance(region.querySelector(':scope > .lead'), region, {distance: 10, opacity: .64, duration: 560, delay: 125});
+      return;
+    }
+    if (region.matches('.hero-portrait')) {
+      animateEntrance(region, region, {distance: 9, opacity: .73, duration: 550, delay: 70});
+      return;
+    }
+
+    const heading = region.querySelector('h2, h3');
+    if (!heading) return;
+    animateEntrance(heading, region, {distance: 10, opacity: .55, duration: 510});
+    const description = heading.nextElementSibling;
+    if (description?.matches('p')) {
+      animateEntrance(description, region, {distance: 7, opacity: .72, duration: 475, delay: 65});
+    }
   }
 
   const observer = new IntersectionObserver(entries => {
@@ -121,13 +141,15 @@
     });
   }, {threshold: .08});
 
-  document.querySelectorAll('.hero-copy, .hero-portrait, .page-heading, [data-reveal]').forEach(element => observer.observe(element));
+  document.querySelectorAll(regionSelector).forEach(element => observer.observe(element));
   document.addEventListener('focusin', event => {
-    activeReveals.forEach((animation, element) => {
-      if (element.contains(event.target)) animation.cancel();
+    activeReveals.forEach((region, animation) => {
+      if (region.contains(event.target)) animation.cancel();
     });
   });
   reducedMotion.addEventListener('change', () => {
-    if (reducedMotion.matches) activeReveals.forEach(animation => animation.cancel());
+    if (reducedMotion.matches) {
+      for (const animation of activeReveals.keys()) animation.cancel();
+    }
   });
 })();

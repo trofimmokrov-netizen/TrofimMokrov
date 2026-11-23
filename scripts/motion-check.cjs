@@ -24,20 +24,39 @@ const pages = [
     page.on('pageerror', error => errors.push(error.message));
     await page.addInitScript(() => {
       const animate = Element.prototype.animate;
-      window.animatedElements = [];
-      Element.prototype.animate = function (...args) {
-        window.animatedElements.push(this);
-        return animate.apply(this, args);
+      window.entrances = [];
+      Element.prototype.animate = function (keyframes, options) {
+        window.entrances.push({element: this, options});
+        return animate.call(this, keyframes, options);
       };
     });
 
     await page.goto(base);
-    await page.waitForFunction(() => window.animatedElements.some(element => element.matches('.hero-copy')));
-    assert.equal((await page.locator('h1').innerText()).trim(), 'Трофим Мокров');
+    await page.waitForFunction(() => window.entrances.some(({element}) => element.matches('.hero-copy > .lead')));
+    const homeTitle = page.getByRole('heading', {level: 1, name: 'Трофим Мокров'});
+    assert(await homeTitle.isVisible());
+    const intro = await page.evaluate(() => {
+      const delay = selector => window.entrances.find(({element}) => element.matches(selector)).options.delay;
+      return {
+        titleDelay: delay('.hero-copy > h1'),
+        leadDelay: delay('.hero-copy > .lead'),
+        controlsMove: window.entrances.some(({element}) => element.matches('.hero-copy a, .hero-actions, .hero-copy')),
+      };
+    });
+    assert(intro.titleDelay < intro.leadDelay, 'The home headline should enter before its description');
+    assert.equal(intro.controlsMove, false, 'Hero links should stay in place');
+
     const section = page.locator('[data-reveal]').last();
-    assert.equal(await section.evaluate(element => window.animatedElements.includes(element)), false);
+    const sectionHeading = section.locator('h2, h3').first();
+    assert.equal(await sectionHeading.evaluate(heading => window.entrances.some(({element}) => element === heading)), false);
     await section.scrollIntoViewIfNeeded();
-    await page.waitForFunction(element => window.animatedElements.includes(element), await section.elementHandle());
+    await page.waitForFunction(heading => window.entrances.some(({element}) => element === heading), await sectionHeading.elementHandle());
+    await page.evaluate(() => window.scrollTo({top: 0, behavior: 'instant'}));
+    await section.scrollIntoViewIfNeeded();
+    assert.equal(await sectionHeading.evaluate(heading => window.entrances.filter(({element}) => element === heading).length), 1);
+
+    await page.goto(base + 'contact.html');
+    await page.waitForFunction(() => window.entrances.some(({element}) => element.matches('.page-heading > h1')));
 
     for (const width of [320, 390, 768, 1440]) {
       await page.setViewportSize({width, height: 1000});
@@ -53,7 +72,7 @@ const pages = [
     const navigation = page.locator('#main-nav');
     await menu.click();
     assert.equal(await menu.getAttribute('aria-expanded'), 'true');
-    await page.waitForFunction(() => window.animatedElements.some(element => element.id === 'main-nav'));
+    await page.waitForFunction(() => window.entrances.some(({element}) => element.id === 'main-nav'));
     await page.keyboard.press('Escape');
     assert.equal(await menu.getAttribute('aria-expanded'), 'false');
     await navigation.waitFor({state: 'hidden'});
@@ -66,7 +85,7 @@ const pages = [
     assert(!(await navigation.evaluate(element => element.classList.contains('is-animating'))));
     await page.reload();
     await menu.click();
-    assert.equal(await page.evaluate(() => window.animatedElements.length), 0);
+    assert.equal(await page.evaluate(() => window.entrances.length), 0);
 
     const plain = await browser.newPage({javaScriptEnabled: false, viewport: {width: 320, height: 844}});
     await plain.goto(base);
@@ -74,7 +93,7 @@ const pages = [
     assert(await plain.getByRole('navigation', {name: 'Основная навигация'}).isVisible());
     assert(await plain.locator('[data-reveal]').last().isVisible());
     assert.deepEqual(errors, []);
-    console.log('PASS: 28 responsive page checks, intro and scroll motion, mobile menu, reduced-motion changes and no-JS fallback.');
+    console.log('PASS: 28 responsive page checks, staggered text, one-time scroll motion, mobile menu, reduced-motion changes and no-JS fallback.');
   } finally {
     await browser.close();
   }

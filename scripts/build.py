@@ -3,6 +3,7 @@
 import json
 import os
 import re
+from datetime import date
 from html import escape as e
 from pathlib import Path
 from urllib.parse import quote, urlsplit
@@ -35,22 +36,14 @@ ICONS={
  '◇':icon('m12 3 9 9-9 9-9-9z')}
 TELEGRAM_ICON=icon('M21 3 3 10.5l6.5 2.7L18 7l-6.5 8 6 5L21 3zM9.5 13.2l2 6 2.4-2.2')
 MENU_ICON=icon('M4 7h16M4 12h16M4 17h16')
+MENU_CLOSE_ICON=icon('m6 6 12 12M18 6 6 18')
+INSTAGRAM_ICON=icon('M7 3h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4zM15.5 12a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0zM17.5 6.5h.01')
 SOCIAL_PROFILES=(
- ('instagram','Instagram',icon('M7 3h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4zM15.5 12a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0zM17.5 6.5h.01')),
+ ('instagram','Instagram',INSTAGRAM_ICON),
  ('telegram','Личный Telegram',TELEGRAM_ICON),
 )
-def social_profile(key,label,symbol,current=None):
+def social_profile(key,label,symbol):
  url=site[key]
- if current:
-  handle='@'+urlsplit(url).path.strip('/')
-  details=f'<strong>{label}</strong><span class="social-handle">{e(handle)}</span>'
-  if key=='telegram':
-   qr=link(current,'assets/telegram-qr.svg')
-   return f'''<a class="social-link contact-telegram" id="telegram" href="{e(url,quote=True)}">
-    <span class="social-profile">{details}<span class="contact-telegram-action">Открыть чат ↗</span></span>
-    <img src="{qr}" width="116" height="116" alt="QR-код личного Telegram" loading="lazy">
-   </a>'''
-  label=f'<span class="social-profile">{details}</span>'
  return f'<a class="social-link" href="{e(url,quote=True)}"><span class="social-icon">{symbol}</span>{label}</a>'
 def social_links():
  return '<nav class="social-links" aria-label="Социальные сети">'+''.join(social_profile(*profile) for profile in SOCIAL_PROFILES)+'</nav>'
@@ -67,7 +60,7 @@ def bot_link(service_id=None):
  if not re.fullmatch('[A-Za-z0-9_-]{1,64}',payload):raise ValueError('Invalid Telegram start payload')
  return e(bot_url+'?start='+payload,quote=True)
 def telegram_action(service_id=None):
- return f'<a class="button telegram-action" href="{bot_link(service_id)}">{TELEGRAM_ICON}Обсудить задачу в Telegram</a>'
+ return f'<a class="button telegram-action" href="{bot_link(service_id)}">{TELEGRAM_ICON}Обсудить в Telegram</a>'
 def eyebrow(text):return f'<div class="eyebrow">{e(text)}</div>'
 def contact(current,service_id=None):return f'''<section class="contact-banner" data-reveal><h2>Обсудим вашу задачу</h2><p>Расскажите, какой результат нужен. Я помогу определить объём работ, стоимость и сроки.</p><div class="actions">{telegram_action(service_id)}<a class="button secondary form-action" href="{link(current,'contact.html')}#request-form">Заполнить форму ↗</a></div></section>'''
 def steps():return '''<div><article class="step"><span>01</span><div><h3>Разбираемся в задаче</h3><p>Что сейчас не работает, кто пользуется инструментами и какой результат нужен.</p></div></article><article class="step"><span>02</span><div><h3>Согласуем состав и стоимость</h3><p>Фиксируем объём, сроки, порядок правок и условия дальнейшей поддержки.</p></div></article><article class="step"><span>03</span><div><h3>Создаём и проверяем</h3><p>Проверяем результат на согласованных примерах и разбираемся, как им пользоваться.</p></div></article></div>'''
@@ -86,19 +79,20 @@ def render(path,title,description,body,active=None,article=False):
  nav=''.join(f'<a href="{link(path,p)}"'+(' aria-current="page"' if p==(active or path) else '')+f'>{e(label)}</a>' for p,label in NAV)
  nav+=f'<a href="{e(bot_url,quote=True)}?start=app">Мини-приложение ↗</a>'
  canonical=f'<link rel="canonical" href="{e(base+"/"+path)}">\n<meta property="og:url" content="{e(base+"/"+path)}">' if base else ''
+ font_preload=f'<link rel="preload" href="{link(path,"assets/fonts/cormorant-garamond-medium.woff2")}" as="font" type="font/woff2" crossorigin>' if path=='index.html' else ''
  ogimage=f'<meta property="og:image" content="{e(base)}/assets/share-card.png"><meta property="og:image:secure_url" content="{e(base)}/assets/share-card.png"><meta property="og:image:type" content="image/png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Трофим Мокров — сайты, AI и автоматизация"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="{e(base)}/assets/share-card.png">' if base else ''
  full_title='Трофим Мокров — сайты, AI и автоматизация' if path=='index.html' else title+' — Трофим Мокров'
  schema={'@context':'https://schema.org','@type':'Person','name':site['name'],'email':site['email'],'telephone':site['phone'],'sameAs':[site['telegram']]}
  if base:schema['url']=base+'/'
  content=f'''<!doctype html>
-<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#16201c"><title>{e(full_title)}</title><meta name="description" content="{e(description)}"><meta property="og:title" content="{e(full_title)}"><meta property="og:description" content="{e(description)}"><meta property="og:type" content="{'article' if article else 'website'}"><meta property="og:locale" content="ru_RU"><meta property="og:site_name" content="Трофим Мокров">{canonical}{ogimage}<link rel="icon" href="{link(path,'logo.svg')}" type="image/svg+xml"><link rel="stylesheet" href="{link(path,'assets/styles.css')}"><script>document.documentElement.classList.add('js');</script><script src="{link(path,'assets/main.js')}" defer></script><script type="application/ld+json">{json.dumps(schema,ensure_ascii=False).replace('<','&lt;')}</script></head>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#fcf9fa"><title>{e(full_title)}</title><meta name="description" content="{e(description)}"><meta property="og:title" content="{e(full_title)}"><meta property="og:description" content="{e(description)}"><meta property="og:type" content="{'article' if article else 'website'}"><meta property="og:locale" content="ru_RU"><meta property="og:site_name" content="Трофим Мокров">{canonical}{ogimage}{font_preload}<link rel="icon" href="{link(path,'logo.svg')}" type="image/svg+xml"><link rel="stylesheet" href="{link(path,'assets/styles.css')}"><script>document.documentElement.classList.add('js');</script><script src="{link(path,'assets/main.js')}" defer></script><script type="application/ld+json">{json.dumps(schema,ensure_ascii=False).replace('<','&lt;')}</script></head>
 <body><a class="skip" href="#main">К содержанию</a>
 <div class="wrap">
  <header class="site-header">
   <a class="brand" href="{link(path,'index.html')}"><img src="{link(path,'logo.svg')}" width="36" height="36" alt=""><span>{e(site['name'])}</span></a>
   <div class="header-actions">
    <a class="header-telegram" href="{bot_link()}" aria-label="Открыть Telegram-бота">{TELEGRAM_ICON}Telegram</a>
-   <button class="menu-button" type="button" aria-controls="main-nav" aria-expanded="false" aria-label="Меню">{MENU_ICON}</button>
+   <button class="menu-button" type="button" aria-controls="main-nav" aria-expanded="false" aria-label="Меню"><span class="menu-open-icon" aria-hidden="true">{MENU_ICON}</span><span class="menu-close-icon" aria-hidden="true">{MENU_CLOSE_ICON}</span></button>
   </div>
   <nav id="main-nav" aria-label="Основная навигация">{nav}</nav>
  </header>
@@ -216,7 +210,7 @@ for a in articles:
  body+=f'<p class="note">Примеры в статье иллюстрируют подход и не описывают клиентские результаты. Состав внедрения зависит от конкретной задачи и возможностей выбранных сервисов.</p><a class="text-link" href="{link(p,"services.html")}#{e(a["service"])}">Услуга по этой теме ↗</a></article>'+contact(p,a['service'])
  render(p,a['title'],a['description'],body,active='articles.html',article=True)
 # Contact
-p='contact.html';body=heading('Контакты','Обсудим вашу задачу','Оставьте заявку на сайте или свяжитесь со мной удобным способом.')
+p='contact.html';body=heading('Контакты','Обсудим вашу задачу','Оставьте заявку на сайте или напишите мне напрямую.')
 body+='''
 <div class="contact-layout">
  <section class="request-form" id="request-form" aria-labelledby="request-form-title">
@@ -238,57 +232,77 @@ body+='''
   <noscript><p>Для загрузки формы нужен JavaScript. Вы можете связаться со мной через Telegram или почту.</p></noscript>
   </div>
  </section>
- <section aria-labelledby="contact-methods-title">
+ <section class="contact-methods" aria-labelledby="contact-methods-title">
   <h2 id="contact-methods-title">Другие способы связи</h2>
   <div class="contact-list">
 '''
-body+=''.join(social_profile(*profile,current=p) for profile in SOCIAL_PROFILES)
-for label,value,url in [
- ('Оставить заявку в боте','@'+bot_address.path.lstrip('/'),bot_link()),
- ('Электронная почта',site['email'],'mailto:'+site['email']),
- ('Телефон',site['phone_display'],'tel:'+site['phone']),
+telegram_handle='@'+urlsplit(site['telegram']).path.strip('/')
+for label,value,url,symbol in [
+ ('Личный Telegram',telegram_handle,site['telegram'],TELEGRAM_ICON),
+ ('Telegram-бот','@'+bot_address.path.lstrip('/'),bot_link(),icon('M12 3v3M9 3h3M6 7h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2zM2 12h2m16 0h2M8 12h1m6 0h1m-7 3h6')),
+ ('Instagram','@'+urlsplit(site['instagram']).path.strip('/'),site['instagram'],INSTAGRAM_ICON),
+ ('Электронная почта',site['email'],'mailto:'+site['email'],icon('M4 6h16v12H4zM4 7l8 6 8-6')),
+ ('Телефон',site['phone_display'],'tel:'+site['phone'],icon('M7 4h3l1 4-2 2a14 14 0 0 0 5 5l2-2 4 1v3a3 3 0 0 1-3 3C10 20 4 14 4 7a3 3 0 0 1 3-3z')),
 ]:
- body+=f'<a class="contact-item" href="{e(url,quote=True)}"><span><small>{e(label)}</small>{e(value)}</span><span aria-hidden="true">↗</span></a>'
-body+='''</div></section></div>'''
+ body+=f'''<a class="contact-row" href="{e(url,quote=True)}"><span class="contact-row-icon">{symbol}</span>
+ <span class="contact-row-copy"><strong>{e(label)}</strong><small>{e(value)}</small></span><span class="contact-row-arrow" aria-hidden="true">↗</span></a>'''
+body+=f'''</div>
+ <a class="telegram-qr-card" id="telegram" href="{e(site['telegram'],quote=True)}">
+  <span><strong>QR-код личного Telegram</strong><small>{e(telegram_handle)}</small></span>
+  <img src="{link(p,'assets/telegram-qr.svg')}" width="116" height="116" alt="" loading="lazy">
+ </a>
+ </section></div>'''
 payment_methods=(
  ('USDT','TRON (TRC-20)',site['usdt_tron_address'],'assets/usdt-tron-qr.svg','Tronscan','https://tronscan.org/address/{}/transactions'),
  ('Bitcoin','Сеть Bitcoin (BTC)',site['bitcoin_address'],'assets/bitcoin-qr.svg','Blockchair','https://blockchair.com/bitcoin/address/{}'),
 )
-body+='<section class="payment-section" id="payment" aria-labelledby="payment-title"><h2 id="payment-title">Оплата в криптовалюте</h2>'
+body+='<section class="payment-section" id="payment" aria-labelledby="payment-title"><h2 id="payment-title">Оплата в криптовалюте</h2><div class="payment-grid">'
 for currency,network,address,qr,explorer,explorer_url in payment_methods:
  body+=f'''
  <div class="payment-method">
-  <div class="payment-details">
+  <div class="wallet-heading">
    <h3>{currency}</h3>
    <p>{network}</p>
-   <div class="wallet-address">
-    <code>{e(address)}</code>
-    <button class="wallet-copy" type="button" aria-label="Скопировать адрес {currency}" hidden>Скопировать адрес</button>
-   </div>
-   <a class="text-link action-link" href="{e(explorer_url.format(address),quote=True)}" target="_blank" rel="noopener noreferrer">Проверить адрес в {explorer} ↗<span class="sr-only"> (в новой вкладке)</span></a>
-   <p class="wallet-status" role="status"></p>
   </div>
-  <img class="wallet-qr" src="{link(p,qr)}" width="152" height="152" alt="QR-код адреса {currency}" loading="lazy">
+  <img class="wallet-qr" src="{link(p,qr)}" width="128" height="128" alt="QR-код адреса {currency}" loading="lazy">
+  <div class="wallet-address"><code>{e(address)}</code></div>
+  <div class="wallet-actions">
+   <button class="button secondary wallet-copy" type="button" aria-label="Скопировать адрес {currency}" hidden>Скопировать адрес</button>
+   <a class="button secondary wallet-explorer" href="{e(explorer_url.format(address),quote=True)}" target="_blank" rel="noopener noreferrer"><span class="sr-only">Проверить адрес в </span>{explorer} ↗<span class="sr-only"> (в новой вкладке)</span></a>
+  </div>
+  <p class="wallet-status" role="status"></p>
  </div>
 '''
-body+='</section>'
+body+='</div></section>'
 render(p,'Контакты','Обсудить сайт, автоматизацию или контент с Трофимом Мокровым: Telegram @TrofimMokrov, trofimmokrov@gmail.com, +7 (915) 998-25-54.',body)
-# Owner-approved updates from the private Telegram publishing queue.
+# Site news and owner-approved updates from the private Telegram publishing queue.
 p='updates.html'
-body=heading('Обновления','Новые идеи.<br>Текущая работа.','Заметки Трофима Мокрова о проектах, сайтах, AI и автоматизации.')
+body='<section class="page-heading"><h1>Обновления</h1><p class="lead">Новые проекты, услуги и изменения на сайте.</p></section>'
 updates=[]
-for source in sorted((ROOT/'content/updates').glob('*.json'),reverse=True):
+for source in (ROOT/'content/updates').glob('*.json'):
  item=json.loads(source.read_text())
  if not re.fullmatch(r'[0-9a-f]{32}',item.get('id','')):raise ValueError('Invalid update ID')
  updates.append(item)
 if not updates:body+='<section class="section"><p class="lead">Здесь появятся заметки о новых проектах и работе над ними.</p></section>'
-for item in updates:
- body+=f'''<article class="section update-entry" id="post-{item['id']}"><time datetime="{e(item['date'],quote=True)}">{e(item['date'])}</time><h2>{e(item['title'])}</h2>'''
+if updates:body+='<div class="updates-feed">'
+for item in sorted(updates,key=lambda update:(update['date'],update['id']),reverse=True):
+ published=date.fromisoformat(item['date'])
+ body+=f'''<article class="section update-entry" id="post-{item['id']}" data-reveal><time datetime="{published.isoformat()}">{published:%d.%m.%Y}</time><h2>{e(item['title'])}</h2>'''
  image=item.get('image')
  if image:
   if image!=f"assets/updates/{item['id']}.jpg":raise ValueError('Invalid update image')
   body+=f'<img class="update-photo" src="{e(image,quote=True)}" loading="lazy" alt="Фотография к публикации: {e(item["title"],quote=True)}">'
- body+='<div class="reading">'+''.join('<p>'+e(part).replace('\n','<br>')+'</p>' for part in item['text'].split('\n\n'))+'</div></article>'
+ body+='<div class="reading">'+''.join('<p>'+e(part).replace('\n','<br>')+'</p>' for part in item['text'].split('\n\n'))+'</div>'
+ if item.get('links'):
+  body+='<div class="update-links actions">'
+  for cta in item['links']:
+   target=cta['target']
+   if not re.fullmatch(r'[a-z0-9-]+\.html(?:#[a-z0-9-]+)?',target):raise ValueError('Invalid update link')
+   page,separator,fragment=target.partition('#')
+   body+=f'<a class="text-link action-link" href="{link(p,page)}{separator}{fragment}">{e(cta["label"])} ↗</a>'
+  body+='</div>'
+ body+='</article>'
+if updates:body+='</div>'
 render(p,'Обновления','Новые публикации Трофима Мокрова о проектах, сайтах, AI и автоматизации.',body)
 # Custom 404, portable relative to deployment path when URL is configured
 p='404.html';body=heading('404 / Страница не найдена','Кажется, здесь<br>пока ничего нет.','Проверьте адрес или вернитесь на главную страницу.')+'<div class="actions" style="margin-bottom:70px"><a class="button" href="'+(e(base)+'/' if base else 'index.html')+'">На главную ↗</a></div>'
