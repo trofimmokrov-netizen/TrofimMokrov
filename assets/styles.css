@@ -200,6 +200,7 @@
 }
 .bot-project h3 {font-size:22px}
 .bot-project p {color:var(--muted);font-size:14px;line-height:1.6}
+.bot-project-site {padding-inline-start:0;margin-bottom:12px;overflow-wrap:anywhere}
 .bot-project-link {
   display:grid;
   grid-template-columns:auto minmax(0,1fr) auto;

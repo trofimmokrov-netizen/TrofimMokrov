@@ -2,12 +2,16 @@
   {
     "name": "Device Workshop",
     "handle": "DeviceWorkshop_bot",
-    "description": "Каталог услуг по ремонту техники, цены, личный кабинет и связь с мастером."
+    "description": "Каталог услуг по ремонту техники, цены, личный кабинет и связь с мастером.",
+    "website": "https://trofimmokrov-netizen.github.io/TigranSite/",
+    "website_label": "Сайт мастерской Тиграна"
   },
   {
     "name": "Древесный замысел",
     "handle": "Drevesny3D_Bot",
-    "description": "Коллекция мастерской, 3D-конструктор, примерка предметов в комнате и связь с Ксенией."
+    "description": "Коллекция мастерской, 3D-конструктор, примерка предметов в комнате и связь с Ксенией.",
+    "website": "https://древесный-замысел.рф/#",
+    "website_label": "древесный-замысел.рф"
   },
   {
     "name": "AIK BASE",

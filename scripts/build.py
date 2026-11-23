@@ -179,9 +179,12 @@ body+='<section class="section telegram-projects" id="telegram-projects" aria-la
 for project in telegram_projects:
  handle=project['handle']
  bot_profile='https://t.me/'+quote(handle,safe='')
+ website=''
+ if project.get('website'):
+  website=f'<a class="text-link action-link bot-project-site" href="{e(project["website"],quote=True)}" target="_blank" rel="noopener noreferrer">{e(project["website_label"])} ↗</a>'
  body+=f'''<article class="bot-project" data-reveal>
  <h3>{e(project['name'])}</h3>
- <p>{e(project['description'])}</p>
+ <p>{e(project['description'])}</p>{website}
  <a class="bot-project-link" href="{e(bot_profile,quote=True)}" target="_blank" rel="noopener noreferrer">
   {TELEGRAM_ICON}<span><strong>Открыть в Telegram</strong><small>@{e(handle)}</small></span><span class="bot-project-arrow" aria-hidden="true">↗</span>
  </a>
