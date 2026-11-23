@@ -345,6 +345,6 @@ else:
  for file in ('sitemap.xml','robots.txt'):
   if (ROOT/file).exists():(ROOT/file).unlink()
 miniapp=ROOT/'miniapp';miniapp.mkdir(exist_ok=True)
-miniapp_catalog={'version':1,'site':{key:site[key] for key in ('name','telegram','bot_url','email','base_url')},'services':services,'pilot':pilot}
+miniapp_catalog={'version':1,'site':{key:site[key] for key in ('name','telegram','instagram','vk','bot_url','email','base_url')},'services':services,'pilot':pilot}
 (miniapp/'catalog.json').write_text(json.dumps(miniapp_catalog,ensure_ascii=False,indent=2)+'\n')
 print(f'Built {len(outputs)} HTML pages and Mini App catalogue. '+('Canonical and sitemap enabled.' if base else 'Public URL unconfirmed; canonical and sitemap omitted.'))

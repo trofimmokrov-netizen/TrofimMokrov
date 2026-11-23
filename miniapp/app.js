@@ -81,6 +81,13 @@
     if (/^https:\/\//.test(url) || /^mailto:/.test(url)) element.href = url;
   }
 
+  function setProfileLink(id, url) {
+    const profile = $(id);
+    link(profile, url);
+    const handle = new URL(profile.href).pathname.replace(/^\/+|\/+$/g, '');
+    profile.querySelector('small').textContent = '@' + handle;
+  }
+
   function render(catalog) {
     if (!catalog || !Array.isArray(catalog.services) || !catalog.site) throw new Error('catalog');
     if (catalog.pilot) {
@@ -110,9 +117,9 @@
       $('catalog').append(card);
     }
     $('service-count').textContent = catalog.services.length + ' направлений';
-    const personal = $('personal-link');
-    link(personal, catalog.site.telegram);
-    personal.querySelector('small').textContent = '@' + new URL(personal.href).pathname.replace(/^\/+|\/+$/g, '');
+    setProfileLink('personal-link', catalog.site.telegram);
+    setProfileLink('instagram-link', catalog.site.instagram);
+    setProfileLink('vk-link', catalog.site.vk);
     if (catalog.site.email) {
       const email = $('email-link');
       link(email, 'mailto:' + catalog.site.email);
@@ -161,18 +168,23 @@
   $('choose-other').addEventListener('click', () => choose());
   $('choose-pilot').addEventListener('click', () => choose('Пробная задача'));
   $('request-contact-fallback').addEventListener('click', () => showView('contact'));
-  $('personal-link').addEventListener('click', event => {
+  function openProfile(event) {
     const url = event.currentTarget.href;
     const tg = state.telegram;
-    if (typeof tg?.openTelegramLink !== 'function' || !url.startsWith('https://t.me/') ||
-        event.button !== 0 || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    if (!url.startsWith('https://') || event.button !== 0 ||
+        event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    const open = url.startsWith('https://t.me/') ? tg?.openTelegramLink : tg?.openLink;
+    if (typeof open !== 'function') return;
     try {
-      tg.openTelegramLink(url);
+      open.call(tg, url);
       event.preventDefault();
     } catch (_) {
       /* The anchor stays available on clients without native link support. */
     }
-  });
+  }
+  for (const id of ['personal-link', 'instagram-link', 'vk-link']) {
+    $(id).addEventListener('click', openProfile);
+  }
 
   $('telegram-sdk').addEventListener('load', connectTelegram);
   connectTelegram();

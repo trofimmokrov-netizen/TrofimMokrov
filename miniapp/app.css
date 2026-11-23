@@ -138,6 +138,8 @@ h1, h2 {
   gap: 10px;
   max-width: 520px;
 }
+.contact-socials {margin-top: 25px}
+.contact-socials h2 {margin: 0 0 11px}
 .contact-action {
   display: grid;
   grid-template-columns: 34px minmax(0, 1fr) auto;
@@ -167,6 +169,7 @@ h1, h2 {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+.contact-action-icon.vk-icon {fill: currentColor; stroke: none}
 @media (max-width: 350px) {
   .topbar, main {padding-inline: 15px}
   .app-hero-actions .hero-primary, .app-hero-actions .hero-secondary {grid-column: 1 / -1}

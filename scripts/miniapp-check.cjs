@@ -9,6 +9,10 @@ const formURL=bitrixBase+'form/loader_25.js';
 const widgetURL=bitrixBase+'site_button/loader_3_gbqxj4.js';
 const formCode='inline/25/h8a51a';
 const formSign='v1:25:site.bd5cb31496b0978c850786c0526098386316cc31190a6437e3d5b2a90988bd56';
+const socialLinks=[
+  ['#instagram-link','https://www.instagram.com/trofimmokrov/'],
+  ['#vk-link','https://vk.com/trofimmokrov'],
+];
 
 function sdk(theme) {
   return 'window.__siteLinks=[];window.__telegramLinks=[];window.__sent=[];window.Telegram={WebApp:{'
@@ -83,7 +87,10 @@ async function mockBitrix(context,{failForm=false}={}) {
         assert.equal(await contactView.getByRole('link',{name:/Написать лично/}).getAttribute('href'),site.telegram);
         assert.equal(await contactView.getByRole('link',{name:/Написать на почту/}).getAttribute('href'),'mailto:'+site.email);
         const contactLinks=await contactView.getByRole('link').evaluateAll(links=>links.map(link=>link.href));
-        assert.deepEqual(contactLinks,[site.telegram,'mailto:'+site.email]);
+        assert.deepEqual(contactLinks.sort(),[site.telegram,'mailto:'+site.email,...socialLinks.map(([,url])=>url)].sort());
+        for (const [selector,url] of socialLinks) {
+          assert.equal(await contactView.locator(selector).getAttribute('href'),url);
+        }
         assert.deepEqual(requests,{form:0,widget:1});
         await page.evaluate(()=>window.__back());
         await page.locator('#hero-request').tap();
@@ -129,6 +136,10 @@ async function mockBitrix(context,{failForm=false}={}) {
         await page.locator('[data-view="contact"]').tap();
         await page.locator('#personal-link').tap();
         assert.deepEqual(await page.evaluate(()=>window.__telegramLinks),[site.telegram]);
+        for (const [selector] of socialLinks) await page.locator(selector).tap();
+        assert.deepEqual(await page.evaluate(()=>window.__siteLinks),socialLinks.map(([,url])=>url));
+        assert.equal(context.pages().length,1);
+        assert.equal(page.url(),base);
         await context.close();
       }
     }
@@ -145,12 +156,18 @@ async function mockBitrix(context,{failForm=false}={}) {
     await page.getByText('Не удалось загрузить форму.',{exact:false}).waitFor();
     await page.locator('#request-contact-fallback').click();
     assert.equal(await page.locator('#personal-link').isVisible(),true);
+    for (const [selector,url] of socialLinks) {
+      await failed.route(url,route=>route.fulfill({contentType:'text/html',body:'<!doctype html><title>Test social profile</title>'}));
+      const [popup]=await Promise.all([page.waitForEvent('popup'),page.locator(selector).click()]);
+      await popup.waitForURL(url);
+      await popup.close();
+    }
     assert.deepEqual(requests,{form:1,widget:1});
     assert.equal(page.url(),base);
     await failed.close();
 
     assert.deepEqual(errors,[]);
-    console.log('PASS: '+layouts+' theme and viewport layouts, hero navigation and direct contacts, lazy Bitrix24 form and persistent chat, draft preservation, mobile touch, failure fallbacks and no Telegram sendData or website navigation.');
+    console.log('PASS: '+layouts+' theme and viewport layouts, hero navigation, direct contacts and social links, lazy Bitrix24 form and persistent chat, draft preservation, mobile touch, failure fallbacks and no external navigation during applications.');
   } finally {
     await browser.close();
   }
