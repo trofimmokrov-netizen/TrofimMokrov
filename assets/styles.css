@@ -70,13 +70,15 @@
   border-radius:12px;
 }
 .hero-actions,.contact-banner .actions {align-items:center}
-.telegram-action {
+.telegram-action,.form-action {
   justify-content:center;
   gap:10px;
   border-radius:8px;
   font-weight:600;
   line-height:1.4;
 }
+.form-action {gap:7px}
+.form-action .ui-icon {width:14px;height:14px}
 .telegram-action .ui-icon {width:19px;height:19px}
 .action-link {
   display:inline-flex;
@@ -132,6 +134,25 @@
 .social-profile {display:grid;gap:3px;line-height:1.25}
 .social-profile strong {font-size:15px}
 .social-handle {color:var(--muted);font-size:13px}
+.contact-list .contact-telegram {
+  justify-content:space-between;
+  padding:13px;
+  background:#e9ede0;
+}
+.contact-telegram .social-profile {padding-inline-start:4px}
+.contact-telegram-action {
+  margin-top:7px;
+  color:var(--ink);
+  font-weight:600;
+}
+.contact-telegram .ui-icon {margin-left:3px}
+.contact-telegram img {
+  flex:none;
+  width:116px;
+  height:116px;
+  border:1px solid var(--line);
+  border-radius:8px;
+}
 .home-services,.home-projects,.home-faq {border-top:1px solid var(--line)}
 .home-services {padding-block:clamp(28px,5vw,62px)}
 .home-services>.action-link {margin-top:14px;padding-inline-start:0}
@@ -163,6 +184,38 @@
 .home-projects h2 {margin-bottom:10px}
 .home-projects p {color:var(--muted);margin:0}
 .home-projects .action-link {flex:none;align-self:center}
+.telegram-projects {
+  padding-block:clamp(24px,4vw,52px);
+  border-top:1px solid var(--line);
+  border-bottom:1px solid var(--line);
+}
+.telegram-projects .section-head h2 {max-width:none}
+.bot-project {
+  display:flex;
+  flex-direction:column;
+  padding:clamp(17px,2vw,26px);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  background:var(--white);
+}
+.bot-project h3 {font-size:22px}
+.bot-project p {color:var(--muted);font-size:14px;line-height:1.6}
+.bot-project-link {
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr) auto;
+  align-items:center;
+  gap:9px;
+  min-height:54px;
+  padding:6px 10px;
+  border-radius:8px;
+  margin-top:auto;
+  background:#e9ede0;
+  font-size:13px;
+}
+.bot-project-link:hover {background:#dce5d0}
+.bot-project-link>.ui-icon {width:18px;height:18px}
+.bot-project-link small {display:block;color:var(--muted);font-size:11px;overflow-wrap:anywhere}
+.bot-project-arrow {display:flex}
 .contact-banner {
   border:1px solid var(--line);
   background:#e9ede0;
@@ -189,6 +242,8 @@
   grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);
   align-items:start;
   gap:clamp(22px,5vw,65px);
+  max-width:1040px;
+  margin-inline:auto;
   padding-bottom:clamp(38px,7vw,85px);
 }
 .contact-layout h2 {font-size:clamp(25px,3vw,34px)}
@@ -199,6 +254,9 @@
   border-radius:var(--radius);
   background:var(--white);
 }
+.request-form h2 {text-align:center}
+.request-form-content {max-width:530px;margin-inline:auto}
+.request-form-content iframe {max-width:100%}
 .request-form-status {color:var(--muted);font-size:15px}
 .payment-section {
   padding:clamp(18px,4vw,42px);
@@ -305,8 +363,7 @@
   .hero-portrait img {border-radius:50%;object-position:50% 37%}
   .hero .lead {font-size:16px}
   .hero-actions {margin-top:20px}
-  .hero-actions .telegram-action {width:100%}
-  .hero-actions .action-link {padding-inline-start:0}
+  .hero-actions .telegram-action,.hero-actions .form-action {width:100%}
   .hero .social-links {margin-top:2px}
   .home-service-list {grid-template-columns:1fr}
   .home-projects {display:block}

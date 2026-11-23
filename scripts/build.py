@@ -9,6 +9,7 @@ from urllib.parse import quote, urlsplit
 ROOT=Path(__file__).resolve().parents[1]
 def read(path): return json.loads((ROOT/path).read_text())
 site=read('content/site.json'); services=read('content/services.json'); projects=read('content/projects.json')
+telegram_projects=read('content/telegram-projects.json')
 pilot=read('content/pilot.json')
 articles=[json.loads(p.read_text()) for p in sorted((ROOT/'content/articles').glob('*.json'))]
 base=site.get('base_url','').rstrip('/')
@@ -38,11 +39,18 @@ SOCIAL_PROFILES=(
  ('instagram','Instagram',icon('M7 3h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4zM15.5 12a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0zM17.5 6.5h.01')),
  ('telegram','Личный Telegram',TELEGRAM_ICON),
 )
-def social_profile(key,label,symbol,detailed=False):
+def social_profile(key,label,symbol,current=None):
  url=site[key]
- if detailed:
+ if current:
   handle='@'+urlsplit(url).path.strip('/')
-  label=f'<span class="social-profile"><strong>{label}</strong><span class="social-handle">{e(handle)}</span></span>'
+  details=f'<strong>{label}</strong><span class="social-handle">{e(handle)}</span>'
+  if key=='telegram':
+   qr=link(current,'assets/telegram-qr.svg')
+   return f'''<a class="social-link contact-telegram" id="telegram" href="{e(url,quote=True)}">
+    <span class="social-profile">{details}<span class="contact-telegram-action">Открыть чат ↗</span></span>
+    <img src="{qr}" width="116" height="116" alt="QR-код личного Telegram" loading="lazy">
+   </a>'''
+  label=f'<span class="social-profile">{details}</span>'
  return f'<a class="social-link" href="{e(url,quote=True)}"><span class="social-icon">{symbol}</span>{label}</a>'
 def social_links():
  return '<nav class="social-links" aria-label="Социальные сети">'+''.join(social_profile(*profile) for profile in SOCIAL_PROFILES)+'</nav>'
@@ -61,7 +69,7 @@ def bot_link(service_id=None):
 def telegram_action(service_id=None):
  return f'<a class="button telegram-action" href="{bot_link(service_id)}">{TELEGRAM_ICON}Обсудить задачу в Telegram</a>'
 def eyebrow(text):return f'<div class="eyebrow">{e(text)}</div>'
-def contact(current,service_id=None):return f'''<section class="contact-banner" data-reveal><h2>Обсудим вашу задачу</h2><p>Расскажите, какой результат нужен. Я помогу определить объём работ, стоимость и сроки.</p><div class="actions">{telegram_action(service_id)}<a class="text-link action-link" href="{link(current,'contact.html')}#request-form">Заполнить форму ↗</a></div></section>'''
+def contact(current,service_id=None):return f'''<section class="contact-banner" data-reveal><h2>Обсудим вашу задачу</h2><p>Расскажите, какой результат нужен. Я помогу определить объём работ, стоимость и сроки.</p><div class="actions">{telegram_action(service_id)}<a class="button secondary form-action" href="{link(current,'contact.html')}#request-form">Заполнить форму ↗</a></div></section>'''
 def steps():return '''<div><article class="step"><span>01</span><div><h3>Разбираемся в задаче</h3><p>Что сейчас не работает, кто пользуется инструментами и какой результат нужен.</p></div></article><article class="step"><span>02</span><div><h3>Согласуем состав и стоимость</h3><p>Фиксируем объём, сроки, порядок правок и условия дальнейшей поддержки.</p></div></article><article class="step"><span>03</span><div><h3>Создаём и проверяем</h3><p>Проверяем результат на согласованных примерах и разбираемся, как им пользоваться.</p></div></article></div>'''
 def pilot_section(current):
  examples=''.join(f'<li>{e(item)}</li>' for item in pilot['examples'])
@@ -128,7 +136,7 @@ body=f'''
   <p class="lead">Создаю сайты и Telegram-ботов, настраиваю Битрикс24 и AI-инструменты для бизнеса. Помогу выбрать, с чего начать.</p>
   <div class="actions hero-actions">
    {telegram_action()}
-   <a class="text-link action-link" href="contact.html#request-form">Заполнить форму ↗</a>
+   <a class="button secondary form-action" href="contact.html#request-form">Заполнить форму ↗</a>
   </div>
   {social_links()}
  </div>
@@ -144,9 +152,9 @@ body=f'''
 <section class="section home-projects" aria-labelledby="home-projects-title" data-reveal>
  <div>
   <h2 id="home-projects-title">Избранные проекты</h2>
-  <p>Сайт Ксении ZEMLYANOVVA EPOXY, цифровые площадки «Древесного замысла» и эта визитка.</p>
+  <p>Примеры ботов и мини-приложений для Device Workshop, «Древесного замысла» и AIK BASE.</p>
  </div>
- <a class="text-link action-link" href="portfolio.html">Смотреть портфолио ↗</a>
+ <a class="text-link action-link" href="portfolio.html#telegram-projects">Смотреть портфолио ↗</a>
 </section>
 '''
 body+=faq_section(faqs[:2]+faqs[-2:-1])+contact(p)
@@ -167,6 +175,18 @@ body+='<p class="note">Цены указаны для базового объё�
 render(p,'Услуги и цены','Состав и стоимость услуг: сайты, автоматизация, настройка устройств, AI-изображения, посты, ведение соцсетей и запуск цифровой инфраструктуры.',body)
 # Portfolio
 p='portfolio.html';body=heading('Портфолио','Работы с понятным<br>контекстом.','Здесь — проекты с описанием задачи и выполненной работы. В каждом проекте указаны мой вклад и границы подтверждённых результатов.')
+body+='<section class="section telegram-projects" id="telegram-projects" aria-labelledby="telegram-projects-title"><div class="section-head"><h2 id="telegram-projects-title">Боты и мини-приложения в Telegram</h2></div><div class="grid">'
+for project in telegram_projects:
+ handle=project['handle']
+ bot_profile='https://t.me/'+quote(handle,safe='')
+ body+=f'''<article class="bot-project" data-reveal>
+ <h3>{e(project['name'])}</h3>
+ <p>{e(project['description'])}</p>
+ <a class="bot-project-link" href="{e(bot_profile,quote=True)}" target="_blank" rel="noopener noreferrer">
+  {TELEGRAM_ICON}<span><strong>Открыть в Telegram</strong><small>@{e(handle)}</small></span><span class="bot-project-arrow" aria-hidden="true">↗</span>
+ </a>
+</article>'''
+body+='</div></section>'
 for item in projects:
  body+=f'''<section class="section" id="{e(item['slug'])}"><span class="project-label">{e(item['kind'])}</span><h2>{e(item['title'])}</h2><p class="lead">{e(item['description'])}</p>'''
  if item.get('image'):
@@ -198,6 +218,7 @@ body+='''
 <div class="contact-layout">
  <section class="request-form" id="request-form" aria-labelledby="request-form-title">
   <h2 id="request-form-title">Оставить заявку</h2>
+  <div class="request-form-content">
   <div id="request-form-status" class="request-form-status" role="status"></div>
   <script data-b24-form="inline/25/h8a51a" data-b24-form-telemetry-sign="v1:25:site.bd5cb31496b0978c850786c0526098386316cc31190a6437e3d5b2a90988bd56" data-skip-moving="true">
   (function (w, d, u) {
@@ -212,12 +233,13 @@ body+='''
   })(window, document, 'https://cdn-ru.bitrix24.ru/b38606320/crm/form/loader_25.js');
   </script>
   <noscript><p>Для загрузки формы нужен JavaScript. Вы можете связаться со мной через Telegram или почту.</p></noscript>
+  </div>
  </section>
  <section aria-labelledby="contact-methods-title">
   <h2 id="contact-methods-title">Другие способы связи</h2>
   <div class="contact-list">
 '''
-body+=''.join(social_profile(*profile,detailed=True) for profile in SOCIAL_PROFILES)
+body+=''.join(social_profile(*profile,current=p) for profile in SOCIAL_PROFILES)
 for label,value,url in [
  ('Оставить заявку в боте','@'+bot_address.path.lstrip('/'),bot_link()),
  ('Электронная почта',site['email'],'mailto:'+site['email']),
@@ -240,7 +262,7 @@ for currency,network,address,qr,explorer,explorer_url in payment_methods:
     <code>{e(address)}</code>
     <button class="wallet-copy" type="button" aria-label="Скопировать адрес {currency}" hidden>Скопировать адрес</button>
    </div>
-   <a class="text-link action-link" href="{e(explorer_url.format(address),quote=True)}">Проверить адрес в {explorer} ↗</a>
+   <a class="text-link action-link" href="{e(explorer_url.format(address),quote=True)}" target="_blank" rel="noopener noreferrer">Проверить адрес в {explorer} ↗<span class="sr-only"> (в новой вкладке)</span></a>
    <p class="wallet-status" role="status"></p>
   </div>
   <img class="wallet-qr" src="{link(p,qr)}" width="152" height="152" alt="QR-код адреса {currency}" loading="lazy">
