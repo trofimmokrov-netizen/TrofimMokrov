@@ -110,9 +110,17 @@
       $('catalog').append(card);
     }
     $('service-count').textContent = catalog.services.length + ' направлений';
-    link($('personal-link'), catalog.site.telegram);
-    link($('email-link'), 'mailto:' + catalog.site.email);
-    link($('portfolio-link'), catalog.site.base_url + '/portfolio.html');
+    const personal = $('personal-link');
+    link(personal, catalog.site.telegram);
+    personal.querySelector('small').textContent = '@' + new URL(personal.href).pathname.replace(/^\/+|\/+$/g, '');
+    if (catalog.site.email) {
+      const email = $('email-link');
+      link(email, 'mailto:' + catalog.site.email);
+      email.querySelector('small').textContent = catalog.site.email;
+    }
+    if (catalog.site.base_url) {
+      link($('hero-projects'), catalog.site.base_url.replace(/\/+$/, '') + '/portfolio.html#telegram-projects');
+    }
     state.catalog = catalog;
     note.hidden = true;
   }
@@ -142,9 +150,15 @@
     event.preventDefault();
     showView('services');
   });
-  $('catalog-title').tabIndex = -1;
+  $('hero-request').addEventListener('click', () => choose());
+  $('hero-services').addEventListener('click', event => {
+    const heading = $('service-list-title');
+    event.preventDefault();
+    heading.focus({preventScroll: true});
+    heading.scrollIntoView({block: 'start'});
+  });
+  $('hero-contact').addEventListener('click', () => showView('contact'));
   $('choose-other').addEventListener('click', () => choose());
-  $('contact-request').addEventListener('click', () => choose());
   $('choose-pilot').addEventListener('click', () => choose('Пробная задача'));
   $('request-contact-fallback').addEventListener('click', () => showView('contact'));
   $('personal-link').addEventListener('click', event => {

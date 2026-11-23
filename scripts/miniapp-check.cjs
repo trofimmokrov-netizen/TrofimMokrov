@@ -60,6 +60,7 @@ async function mockBitrix(context,{failForm=false}={}) {
         await page.goto(base);
         await page.waitForSelector('.service-card');
         await page.waitForSelector('.b24-widget-button-wrapper');
+        assert.equal(await page.locator('#catalog-title').textContent(),'Трофим Мокров');
         assert.equal(await page.locator('.service-card').count(),services.length);
         assert.equal(await page.locator('html').evaluate((el,name)=>el.classList.contains(name),theme),true);
         assert.deepEqual(requests,{form:0,widget:1});
@@ -71,6 +72,29 @@ async function mockBitrix(context,{failForm=false}={}) {
         assert.equal(await page.locator('body').evaluate(el=>getComputedStyle(el).paddingTop),'40px');
         assert.equal(await page.locator('.tabs').evaluate(el=>getComputedStyle(el).paddingBottom),'40px');
 
+        const projectsURL=new URL(await page.locator('#hero-projects').getAttribute('href'),base);
+        assert.equal(projectsURL.href,site.base_url+'/portfolio.html#telegram-projects');
+        assert.equal(await page.locator('#hero-services').getAttribute('href'),'#service-list-title');
+        await page.locator('#hero-services').tap();
+        assert.equal(await page.locator(':focus').getAttribute('id'),'service-list-title');
+        await page.locator('#hero-contact').tap();
+        const contactView=page.locator('#contact-view');
+        assert.equal(await contactView.isVisible(),true);
+        assert.equal(await contactView.getByRole('link',{name:/Написать лично/}).getAttribute('href'),site.telegram);
+        assert.equal(await contactView.getByRole('link',{name:/Написать на почту/}).getAttribute('href'),'mailto:'+site.email);
+        const contactLinks=await contactView.getByRole('link').evaluateAll(links=>links.map(link=>link.href));
+        assert.deepEqual(contactLinks,[site.telegram,'mailto:'+site.email]);
+        assert.deepEqual(requests,{form:0,widget:1});
+        await page.evaluate(()=>window.__back());
+        await page.locator('#hero-request').tap();
+        await page.locator('#mock-bitrix-form').waitFor();
+        assert.equal(await page.locator('#request-form-status').isHidden(),true);
+        assert.equal(await page.locator('#request-contact-fallback').isHidden(),true);
+        assert.equal(await page.locator(':focus').getAttribute('id'),'request-title');
+        assert.equal(await page.evaluate(()=>window.__formMountedVisible),true);
+        assert.deepEqual(await page.evaluate(()=>window.__formAttributes),[formCode,formSign,'true']);
+        await page.locator('#mock-bitrix-form input').fill('Черновик');
+
         for (const view of ['services','request','contact']) {
           await page.locator('[data-view="'+view+'"]').tap();
           assert.equal(await page.locator('#'+view+'-view').isVisible(),true);
@@ -80,13 +104,8 @@ async function mockBitrix(context,{failForm=false}={}) {
           assert(widgetBox.y+widgetBox.height<tabBox.y,'chat launcher must sit above tabs');
           layouts++;
         }
-        await page.locator('#contact-request').tap();
-        await page.locator('#mock-bitrix-form').waitFor();
-        assert.equal(await page.locator('#request-form-status').isHidden(),true);
-        assert.equal(await page.locator('#request-contact-fallback').isHidden(),true);
-        assert.equal(await page.locator(':focus').getAttribute('id'),'request-title');
-        assert.equal(await page.evaluate(()=>window.__formMountedVisible),true);
-        assert.deepEqual(await page.evaluate(()=>window.__formAttributes),[formCode,formSign,'true']);
+        await page.locator('[data-view="request"]').tap();
+        assert.equal(await page.locator('#mock-bitrix-form input').inputValue(),'Черновик');
 
         await page.evaluate(()=>window.__back());
         const service=page.locator('.service-card').filter({has:page.getByRole('heading',{name:'Сайты с помощью AI',exact:true})});
@@ -122,7 +141,7 @@ async function mockBitrix(context,{failForm=false}={}) {
     page.on('pageerror',error=>errors.push(error.message));
     await page.goto(base);
     await page.getByText('Не удалось загрузить услуги.',{exact:false}).waitFor();
-    await page.locator('[data-view="request"]').click();
+    await page.locator('#hero-request').click();
     await page.getByText('Не удалось загрузить форму.',{exact:false}).waitFor();
     await page.locator('#request-contact-fallback').click();
     assert.equal(await page.locator('#personal-link').isVisible(),true);
@@ -131,7 +150,7 @@ async function mockBitrix(context,{failForm=false}={}) {
     await failed.close();
 
     assert.deepEqual(errors,[]);
-    console.log('PASS: '+layouts+' theme and viewport layouts, catalog and contacts, lazy Bitrix24 form and persistent chat, mobile touch, failure fallbacks and no Telegram sendData or website navigation.');
+    console.log('PASS: '+layouts+' theme and viewport layouts, hero navigation and direct contacts, lazy Bitrix24 form and persistent chat, draft preservation, mobile touch, failure fallbacks and no Telegram sendData or website navigation.');
   } finally {
     await browser.close();
   }
