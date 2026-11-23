@@ -1,64 +1,51 @@
-/* No bot token, public submission endpoint or browser storage is used here. */
+/* Telegram opens the site's form. The Mini App does not collect application data. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
-  const state = {catalog: null, view: 'services', review: null, sending: false, telegram: null};
-  const note = $('context-note'), status = $('form-status'), form = $('request-form');
-  const fields = {service: $('service'), details: $('details'), contact: $('contact'), format: $('request-format')};
-  function setStatus(text, error = false) {status.textContent = text; status.classList.toggle('error', error);}
-  function inTelegram() {return state.telegram && state.telegram.platform && state.telegram.platform !== 'unknown';}
-  function canSend() {return inTelegram() && typeof state.telegram.sendData === 'function';}
-  function updateContext() {
-    if (!state.catalog) return;
-    note.hidden = Boolean(canSend());
-    if (!note.hidden) note.textContent = 'Это просмотр приложения. Для отправки откройте @TrofimAI_bot и нажмите «Открыть приложение» в меню бота.';
-    $('send-button').disabled = !canSend() || state.sending;
-  }
+  const note = $('context-note');
+  let currentView = 'services';
+  let telegram;
+
   function syncBackButton() {
-    const back = state.telegram && state.telegram.BackButton;
-    if (back) {if (state.view !== 'services') back.show(); else back.hide();}
+    const back = telegram?.BackButton;
+    if (currentView === 'services') back?.hide?.();
+    else back?.show?.();
   }
-  function showView(view, focus = true) {
-    if (!['services', 'request', 'contact'].includes(view)) return;
-    state.view = view;
-    for (const name of ['services', 'request', 'contact']) $(name + '-view').hidden = name !== view;
+
+  function showView(view) {
+    currentView = view;
+    for (const name of ['services', 'contact']) $(name + '-view').hidden = name !== view;
     document.querySelectorAll('[data-view]').forEach(button => {
-      if (button.dataset.view === view) button.setAttribute('aria-current', 'page'); else button.removeAttribute('aria-current');
+      if (button.dataset.view === view) button.setAttribute('aria-current', 'page');
+      else button.removeAttribute('aria-current');
     });
-    syncBackButton(); window.scrollTo(0, 0);
-    if (focus) $(view === 'services' ? 'catalog-title' : view + '-title').focus({preventScroll: true});
+    syncBackButton();
+    window.scrollTo(0, 0);
+    $(view === 'services' ? 'catalog-title' : 'contact-title').focus({preventScroll: true});
   }
-  function resetReview() {
-    state.review = null;
-    $('review').hidden = true;
-    form.hidden = false;
-    setStatus('');
+
+  function configureLinks(site) {
+    if (typeof site.base_url === 'string' && site.base_url.startsWith('https://')) {
+      const base = site.base_url.replace(/\/+$/, '') + '/';
+      const requestURL = new URL('contact.html#request-form', base);
+      for (const link of document.querySelectorAll('[data-request-link]')) link.href = requestURL;
+      $('portfolio-link').href = new URL('portfolio.html', base);
+    }
+    if (typeof site.telegram === 'string' && site.telegram.startsWith('https://t.me/')) {
+      $('personal-link').href = site.telegram;
+    }
+    if (typeof site.email === 'string' && site.email) $('email-link').href = 'mailto:' + site.email;
   }
-  function edit() {resetReview(); fields.details.focus();}
-  function updateFormat() {
-    const pilot = fields.format.value === 'pilot';
-    $('pilot-form-note').hidden = !pilot; $('portfolio-interest-option').hidden = !pilot;
-    if (!pilot) $('portfolio-interest').checked = false;
-    if (pilot && state.catalog && state.catalog.pilot) $('pilot-form-note').textContent = state.catalog.pilot.terms + ' ' + state.catalog.pilot.continuation;
-  }
-  function choose(id = 'other', requestFormat = null) {
-    if (!state.catalog) return;
-    fields.service.value = id;
-    if (requestFormat) fields.format.value = requestFormat;
-    updateFormat();
-    resetReview();
-    showView('request');
-  }
-  function link(element, url) {if (/^https:\/\//.test(url) || /^mailto:/.test(url)) element.href = url;}
+
   function render(catalog) {
     if (!catalog || !Array.isArray(catalog.services) || !catalog.site) throw new Error('catalog');
-    state.catalog = catalog;
+    configureLinks(catalog.site);
     if (catalog.pilot) {
       const pilot = catalog.pilot;
       $('pilot-title').textContent = pilot.headline; $('pilot-intro').textContent = pilot.intro;
       $('pilot-terms').textContent = pilot.terms; $('pilot-continuation').textContent = pilot.continuation; $('pilot-portfolio').textContent = pilot.portfolio;
       for (const example of pilot.examples) {const li = document.createElement('li'); li.textContent = example; $('pilot-examples').append(li);}
-      $('pilot-offer').hidden = false; $('choose-pilot').disabled = false; $('pilot-format-option').disabled = false;
+      $('pilot-offer').hidden = false;
     }
     for (const service of catalog.services) {
       const card = document.createElement('article'); card.className = 'service-card';
@@ -70,72 +57,65 @@
       const list = document.createElement('ul');
       for (const item of service.includes || []) {const li = document.createElement('li'); li.textContent = item; list.append(li);} details.append(list);
       for (const text of [service.result, service.extra, service.separate]) {if (text) {const p = document.createElement('p'); p.textContent = text; details.append(p);}}
-      const button = document.createElement('button'); button.className = 'button full'; button.type = 'button'; button.textContent = 'Обсудить задачу →'; button.addEventListener('click', () => choose(service.id));
-      card.append(title, audience, price, details, button); $('catalog').append(card);
-      const option = document.createElement('option'); option.value = service.id; option.textContent = service.name; fields.service.append(option);
+      const link = document.createElement('a');
+      link.className = 'button full';
+      link.textContent = 'Оставить заявку ↗';
+      link.href = $('tab-request').href;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.dataset.requestLink = '';
+      card.append(title, audience, price, details, link);
+      $('catalog').append(card);
     }
-    const other = document.createElement('option'); other.value = 'other'; other.textContent = 'Другая задача'; fields.service.append(other);
     $('service-count').textContent = catalog.services.length + ' направлений';
-    fields.service.disabled = false; $('choose-other').disabled = false; $('review-button').disabled = false; $('contact-request').disabled = false;
-    link($('personal-link'), catalog.site.telegram); link($('email-link'), 'mailto:' + catalog.site.email);
-    link($('portfolio-link'), catalog.site.base_url + '/portfolio.html'); link($('open-bot'), catalog.site.bot_url + '?start=app'); updateContext();
+    note.hidden = true;
   }
+
   function connectTelegram() {
-    const tg = window.Telegram && window.Telegram.WebApp;
-    if (!tg || state.telegram === tg) return;
-    state.telegram = tg;
+    const client = window.Telegram?.WebApp;
+    if (!client?.platform || client.platform === 'unknown' || telegram === client) return;
+    telegram = client;
+    const theme = () => {
+      document.documentElement.classList.toggle('dark', client.colorScheme === 'dark');
+      document.documentElement.classList.toggle('light', client.colorScheme === 'light');
+    };
     try {
-      tg.ready(); tg.expand();
-      const theme = () => {document.documentElement.classList.toggle('dark', tg.colorScheme === 'dark'); document.documentElement.classList.toggle('light', tg.colorScheme === 'light');};
-      theme(); tg.onEvent('themeChanged', theme);
-      if (tg.BackButton) tg.BackButton.onClick(() => state.review ? edit() : showView('services')); syncBackButton();
-    } catch (_) { /* Older clients retain standard form controls. */ }
-    updateContext();
+      client.ready?.();
+      client.expand?.();
+      theme();
+      client.onEvent?.('themeChanged', theme);
+      client.BackButton?.onClick?.(() => showView('services'));
+      syncBackButton();
+    } catch (_) {
+      /* Standard links and in-page navigation remain usable. */
+    }
   }
+
   document.querySelectorAll('[data-view]').forEach(button => button.addEventListener('click', () => showView(button.dataset.view)));
-  for (const id of ['personal-link', 'open-bot']) {
-    $(id).addEventListener('click', event => {
-      const url = event.currentTarget.href;
-      if (!inTelegram() || typeof state.telegram.openTelegramLink !== 'function' ||
-          !url.startsWith('https://t.me/') || event.button !== 0 ||
-          event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
-      try {
-        state.telegram.openTelegramLink(url);
-        event.preventDefault();
-      } catch (_) { /* Use the anchor when the Telegram client rejects the native navigation. */ }
+  document.querySelector('.brand').addEventListener('click', event => {event.preventDefault(); showView('services');});
+  document.addEventListener('click', event => {
+    if (!telegram || event.defaultPrevented || event.button !== 0 || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    const link = event.target.closest?.('a[data-request-link], a[data-telegram-link], a[data-site-link]');
+    if (!link || !link.href.startsWith('https://')) return;
+    const opener = link.hasAttribute('data-telegram-link') ? telegram.openTelegramLink : telegram.openLink;
+    if (typeof opener !== 'function') return;
+    try {
+      opener.call(telegram, link.href);
+      event.preventDefault();
+    } catch (_) {
+      /* The anchor stays available on clients without native link support. */
+    }
+  });
+
+  $('telegram-sdk').addEventListener('load', connectTelegram);
+  connectTelegram();
+  fetch('catalog.json', {cache: 'no-cache'})
+    .then(response => {
+      if (!response.ok) throw new Error('catalog');
+      return response.json();
+    })
+    .then(render)
+    .catch(() => {
+      note.textContent = 'Не удалось загрузить услуги. Откройте форму заявки на сайте или раздел «Контакты».';
     });
-  }
-  document.querySelector('.brand').addEventListener('click', event => {event.preventDefault(); showView('services');}); $('catalog-title').tabIndex = -1;
-  $('choose-other').addEventListener('click', () => choose()); $('contact-request').addEventListener('click', () => choose()); $('edit-button').addEventListener('click', edit);
-  $('choose-pilot').addEventListener('click', () => choose('other', 'pilot')); fields.format.addEventListener('change', updateFormat);
-  fields.details.addEventListener('input', () => {$('details-count').textContent = fields.details.value.length + ' / 1500';});
-  form.addEventListener('submit', event => {
-    event.preventDefault(); if (!state.catalog || !form.reportValidity()) return;
-    const details = fields.details.value.trim(), contact = fields.contact.value.trim();
-    if (details.length < 10 || contact.length < 5 || /[\r\n]/.test(contact) || !/[\p{L}\p{N}]/u.test(contact)) {setStatus('Укажите описание от 10 символов и контакт одной строкой.', true); return;}
-    const data = {version: 1, type: 'request', consent: true, service_id: fields.service.value, details, contact, request_format: fields.format.value, portfolio_interest: fields.format.value === 'pilot' && $('portfolio-interest').checked};
-    if (new TextEncoder().encode(JSON.stringify(data)).length > 4096) {setStatus('Описание слишком объёмное для Telegram. Сократите его и попробуйте снова.', true); return;}
-    state.review = data; $('review-service').textContent = fields.service.options[fields.service.selectedIndex].text;
-    const pilot = data.request_format === 'pilot';
-    $('review-format').textContent = pilot ? 'Пробная задача — условия индивидуально' : 'Обычная задача';
-    $('review-portfolio-label').hidden = !pilot; $('review-portfolio').hidden = !pilot; $('review-pilot-note').hidden = !pilot;
-    $('review-portfolio').textContent = data.portfolio_interest ? 'Готов(а) обсудить кейс. Разрешение на публикацию ещё не дано.' : 'Без запроса на обсуждение кейса.';
-    if (pilot) $('review-pilot-note').textContent = state.catalog.pilot.terms + ' ' + state.catalog.pilot.continuation;
-    $('review-details').textContent = details; $('review-contact').textContent = contact;
-    form.hidden = true; $('review').hidden = false;
-    setStatus(canSend() ? '' : 'Отправка доступна при открытии приложения кнопкой в боте.');
-    updateContext();
-    $('review-title').focus({preventScroll: true});
-    $('review').scrollIntoView({block: 'start'});
-  });
-  $('send-button').addEventListener('click', () => {
-    if (!state.review || state.sending || !canSend()) return;
-    state.sending = true; updateContext();
-    try {state.telegram.sendData(JSON.stringify(state.review)); setStatus('Данные переданы Telegram. Подтверждение сохранения заявки придёт от бота в чат.');}
-    catch (_) {state.sending = false; updateContext(); setStatus('Telegram не принял данные. Попробуйте ещё раз или напишите Трофиму лично.', true);}
-  });
-  $('telegram-sdk').addEventListener('load', connectTelegram); connectTelegram();
-  fetch('catalog.json', {cache: 'no-cache'}).then(response => {if (!response.ok) throw new Error('catalog'); return response.json();}).then(render).catch(() => {
-    note.hidden = false; note.textContent = 'Не удалось загрузить услуги. Обновите приложение или напишите @TrofimMokrov.'; setStatus('Каталог недоступен. Можно связаться с Трофимом через раздел «Контакты».', true);
-  });
 })();

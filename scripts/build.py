@@ -48,6 +48,15 @@ def social_profile(key,label,symbol):
 def social_links():
  return '<nav class="social-links" aria-label="Социальные сети">'+''.join(social_profile(*profile) for profile in SOCIAL_PROFILES)+'</nav>'
 NAV=[('index.html','Главная'),('about.html','Обо мне'),('services.html','Услуги и цены'),('portfolio.html','Портфолио'),('articles.html','Статьи'),('updates.html','Обновления'),('contact.html','Контакты')]
+BITRIX_SITE_WIDGET='''<script>
+(function (w, d, u) {
+  var s = d.createElement('script');
+  s.async = true;
+  s.src = u + '?' + (Date.now() / 60000 | 0);
+  var h = d.getElementsByTagName('script')[0];
+  h.parentNode.insertBefore(s, h);
+})(window, document, 'https://cdn-ru.bitrix24.ru/b38606320/crm/site_button/loader_3_gbqxj4.js');
+</script>'''
 outputs=[]
 def href(current,target):
  if current=='404.html' and base:return base+'/'+target
@@ -59,10 +68,13 @@ def bot_link(service_id=None):
  payload='service_'+service_id if service_id else 'site'
  if not re.fullmatch('[A-Za-z0-9_-]{1,64}',payload):raise ValueError('Invalid Telegram start payload')
  return e(bot_url+'?start='+payload,quote=True)
-def telegram_action(service_id=None):
- return f'<a class="button telegram-action" href="{bot_link(service_id)}">{TELEGRAM_ICON}Обсудить в Telegram</a>'
+def telegram_action(service_id=None,secondary=False):
+ style=' secondary' if secondary else ''
+ return f'<a class="button telegram-action{style}" href="{bot_link(service_id)}">{TELEGRAM_ICON}Обсудить в Telegram</a>'
+def form_action(current):
+ return f'<a class="button form-action" href="{link(current,"contact.html")}#request-form">Заполнить форму ↗</a>'
 def eyebrow(text):return f'<div class="eyebrow">{e(text)}</div>'
-def contact(current,service_id=None):return f'''<section class="contact-banner" data-reveal><h2>Обсудим вашу задачу</h2><p>Расскажите, какой результат нужен. Я помогу определить объём работ, стоимость и сроки.</p><div class="actions">{telegram_action(service_id)}<a class="button secondary form-action" href="{link(current,'contact.html')}#request-form">Заполнить форму ↗</a></div></section>'''
+def contact(current,service_id=None):return f'''<section class="contact-banner" data-reveal><h2>Обсудим вашу задачу</h2><p>Расскажите, какой результат нужен. Я помогу определить объём работ, стоимость и сроки.</p><div class="actions">{form_action(current)}{telegram_action(service_id,secondary=True)}</div></section>'''
 def steps():return '''<div><article class="step"><span>01</span><div><h3>Разбираемся в задаче</h3><p>Что сейчас не работает, кто пользуется инструментами и какой результат нужен.</p></div></article><article class="step"><span>02</span><div><h3>Согласуем состав и стоимость</h3><p>Фиксируем объём, сроки, порядок правок и условия дальнейшей поддержки.</p></div></article><article class="step"><span>03</span><div><h3>Создаём и проверяем</h3><p>Проверяем результат на согласованных примерах и разбираемся, как им пользоваться.</p></div></article></div>'''
 def pilot_section(current):
  examples=''.join(f'<li>{e(item)}</li>' for item in pilot['examples'])
@@ -79,13 +91,13 @@ def render(path,title,description,body,active=None,article=False):
  nav=''.join(f'<a href="{link(path,p)}"'+(' aria-current="page"' if p==(active or path) else '')+f'>{e(label)}</a>' for p,label in NAV)
  nav+=f'<a href="{e(bot_url,quote=True)}?start=app">Мини-приложение ↗</a>'
  canonical=f'<link rel="canonical" href="{e(base+"/"+path)}">\n<meta property="og:url" content="{e(base+"/"+path)}">' if base else ''
- font_preload=f'<link rel="preload" href="{link(path,"assets/fonts/cormorant-garamond-medium.woff2")}" as="font" type="font/woff2" crossorigin>' if path=='index.html' else ''
+ font_preload=f'<link rel="preload" href="{link(path,"assets/fonts/nunito-semibold.woff2")}" as="font" type="font/woff2" crossorigin>' if path=='index.html' else ''
  ogimage=f'<meta property="og:image" content="{e(base)}/assets/share-card.png"><meta property="og:image:secure_url" content="{e(base)}/assets/share-card.png"><meta property="og:image:type" content="image/png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Трофим Мокров — сайты, AI и автоматизация"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="{e(base)}/assets/share-card.png">' if base else ''
  full_title='Трофим Мокров — сайты, AI и автоматизация' if path=='index.html' else title+' — Трофим Мокров'
  schema={'@context':'https://schema.org','@type':'Person','name':site['name'],'email':site['email'],'telephone':site['phone'],'sameAs':[site['telegram']]}
  if base:schema['url']=base+'/'
  content=f'''<!doctype html>
-<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#fcf9fa"><title>{e(full_title)}</title><meta name="description" content="{e(description)}"><meta property="og:title" content="{e(full_title)}"><meta property="og:description" content="{e(description)}"><meta property="og:type" content="{'article' if article else 'website'}"><meta property="og:locale" content="ru_RU"><meta property="og:site_name" content="Трофим Мокров">{canonical}{ogimage}{font_preload}<link rel="icon" href="{link(path,'logo.svg')}" type="image/svg+xml"><link rel="stylesheet" href="{link(path,'assets/styles.css')}"><script>document.documentElement.classList.add('js');</script><script src="{link(path,'assets/main.js')}" defer></script><script type="application/ld+json">{json.dumps(schema,ensure_ascii=False).replace('<','&lt;')}</script></head>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#f5f5ee"><title>{e(full_title)}</title><meta name="description" content="{e(description)}"><meta property="og:title" content="{e(full_title)}"><meta property="og:description" content="{e(description)}"><meta property="og:type" content="{'article' if article else 'website'}"><meta property="og:locale" content="ru_RU"><meta property="og:site_name" content="Трофим Мокров">{canonical}{ogimage}{font_preload}<link rel="icon" href="{link(path,'logo.svg')}" type="image/svg+xml"><link rel="stylesheet" href="{link(path,'assets/styles.css')}"><script>document.documentElement.classList.add('js');</script><script src="{link(path,'assets/main.js')}" defer></script><script type="application/ld+json">{json.dumps(schema,ensure_ascii=False).replace('<','&lt;')}</script></head>
 <body><a class="skip" href="#main">К содержанию</a>
 <div class="wrap">
  <header class="site-header">
@@ -102,7 +114,9 @@ def render(path,title,description,body,active=None,article=False):
   {social_links()}
   <div class="footer-links"><a href="{bot_link()}">Бот для заявок ↗</a><a href="{link(path,'contact.html')}">Контакты</a><a href="{link(path,'contact.html')}#payment">Оплата</a></div>
  </footer>
-</div></body></html>'''
+</div>
+{BITRIX_SITE_WIDGET}
+</body></html>'''
  for symbol,svg in ICONS.items():content=content.replace(symbol,svg)
  target=ROOT/path;target.parent.mkdir(parents=True,exist_ok=True);target.write_text(content+'\n');outputs.append(path)
 faqs=[('Можно сначала посмотреть, каким будет сайт?', 'Да. Сначала показываю предварительный вариант, чтобы вы могли оценить идею и подачу. После обсуждения согласуем дальнейшую доработку, стоимость и условия оплаты. Базовый сайт с помощью AI — от 10 000 ₽.'),('Можно дополнить сайт после запуска?', 'Да. Можно начать с небольшой версии, а затем добавлять услуги, статьи, проекты и страницы. Новые задачи и их стоимость согласуются отдельно.'),('Кто следит за системой после запуска?', 'При подключении проверяю согласованный сценарий и объясняю его работу. Дальнейшее наблюдение и изменения можно поручить мне отдельно: заранее согласуем график проверок, канал связи, сроки реакции и стоимость. Постоянная доступность и устранение любых технических проблем в разовое подключение не входят.'),('AI-агент публикует во всех соцсетях?', 'Подключаем согласованные площадки, где доступны необходимые интеграции. До оплаты проверяем возможности ваших аккаунтов и фиксируем состав. Обещать одинаковую работу во всех соцсетях без такой проверки было бы некорректно.'),('Что входит в подключение AI-агента за 10 000 ₽?', 'Подбор сценария, подключение согласованных аккаунтов, настройка стиля и расписания, тестовая публикация и объяснение работы. Подписки сервисов, нестандартная разработка и дальнейшее ведение оплачиваются отдельно.'),('Можно обратиться с личной задачей, без бизнеса?', 'Да. Можно обсудить настройку компьютера или приложений, личный сайт, AI-инструменты и контент для собственного проекта. Решение и объём подбираются индивидуально.'),('Можно начать с небольшой задачи?','Да. Можно настроить одно устройство, подготовить изображение или автоматизировать один понятный процесс. Состав небольшой задачи согласуем заранее.'),('Что нужно для расчёта стоимости?','Расскажите, чем занимаетесь, какой результат нужен и какими инструментами уже пользуетесь. Примеры и ссылки помогут точнее определить объём. Пароли и персональные данные в первом сообщении не нужны.'),('Что означает цена «от»?','Это стоимость базового объёма, описанного в услуге. Дополнительные страницы, сценарии, площадки и нестандартные интеграции оцениваются отдельно до начала работы.'),('Вы гарантируете рост продаж?','Нет. Я отвечаю за согласованный результат работы: сайт, контент, настройку или сценарий. Продажи зависят также от продукта, аудитории, рекламы и обработки обращений.'),('Что со сроками, правками и поддержкой?','Сроки, количество согласований и условия поддержки определяются для конкретной задачи до начала работы. Бессрочная поддержка и неограниченные правки в тарифы не входят.')]
@@ -129,8 +143,8 @@ body=f'''
   <h1 id="home-title">{e(site['name'])}</h1>
   <p class="lead">Создаю сайты и Telegram-ботов, настраиваю Битрикс24 и AI-инструменты для бизнеса. Помогу выбрать, с чего начать.</p>
   <div class="actions hero-actions">
-   {telegram_action()}
-   <a class="button secondary form-action" href="contact.html#request-form">Заполнить форму ↗</a>
+   {form_action(p)}
+   {telegram_action(secondary=True)}
   </div>
   {social_links()}
  </div>
