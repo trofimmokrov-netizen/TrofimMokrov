@@ -87,6 +87,16 @@
     });
 
     document.documentElement.classList.add('nav-ready');
+    const header = navigation.closest('.site-header');
+    if (header && 'ResizeObserver' in window) {
+      const updateScrollPadding = () => {
+        if (mobile.matches) {
+          document.documentElement.style.setProperty('--sticky-header-scroll-padding', header.offsetHeight + 11 + 'px');
+        }
+      };
+      updateScrollPadding();
+      new ResizeObserver(updateScrollPadding).observe(header);
+    }
   }
 
   if (!('IntersectionObserver' in window) || !Element.prototype.animate) return;

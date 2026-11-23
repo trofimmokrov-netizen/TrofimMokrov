@@ -4,6 +4,7 @@ import json
 import os
 import re
 from datetime import date
+from hashlib import sha256
 from html import escape as e
 from pathlib import Path
 from urllib.parse import quote, urlsplit
@@ -62,8 +63,11 @@ def href(current,target):
  if current=='404.html' and base:return base+'/'+target
  return os.path.relpath(ROOT/target,(ROOT/current).parent).replace(os.sep,'/')
 def link(current,target):return e(href(current,target),quote=True)
+def versioned_link(current,target):
+ version=sha256((ROOT/target).read_bytes()).hexdigest()[:12]
+ return f'{link(current,target)}?v={version}'
 def portrait(current):
- return f'''<figure class="owner-portrait"><img src="{link(current,'assets/trofim-mokrov-portrait.jpg')}" width="1024" height="1536" alt="{e(site['name'])}" decoding="async"><figcaption>{e(site['name'])}<span>{e(site['tagline'])}</span></figcaption></figure>'''
+ return f'''<figure class="owner-portrait"><img src="{link(current,'assets/trofim-mokrov-portrait-800.webp')}" width="800" height="1200" alt="{e(site['name'])}" decoding="async"><figcaption>{e(site['name'])}<span>{e(site['tagline'])}</span></figcaption></figure>'''
 def bot_link(service_id=None):
  payload='service_'+service_id if service_id else 'site'
  if not re.fullmatch('[A-Za-z0-9_-]{1,64}',payload):raise ValueError('Invalid Telegram start payload')
@@ -97,7 +101,7 @@ def render(path,title,description,body,active=None,article=False):
  schema={'@context':'https://schema.org','@type':'Person','name':site['name'],'email':site['email'],'telephone':site['phone'],'sameAs':[site['telegram']]}
  if base:schema['url']=base+'/'
  content=f'''<!doctype html>
-<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#f5f5ee"><title>{e(full_title)}</title><meta name="description" content="{e(description)}"><meta property="og:title" content="{e(full_title)}"><meta property="og:description" content="{e(description)}"><meta property="og:type" content="{'article' if article else 'website'}"><meta property="og:locale" content="ru_RU"><meta property="og:site_name" content="Трофим Мокров">{canonical}{ogimage}{font_preload}<link rel="icon" href="{link(path,'logo.svg')}" type="image/svg+xml"><link rel="stylesheet" href="{link(path,'assets/styles.css')}"><script>document.documentElement.classList.add('js');</script><script src="{link(path,'assets/main.js')}" defer></script><script type="application/ld+json">{json.dumps(schema,ensure_ascii=False).replace('<','&lt;')}</script></head>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#f5f5ee"><title>{e(full_title)}</title><meta name="description" content="{e(description)}"><meta property="og:title" content="{e(full_title)}"><meta property="og:description" content="{e(description)}"><meta property="og:type" content="{'article' if article else 'website'}"><meta property="og:locale" content="ru_RU"><meta property="og:site_name" content="Трофим Мокров">{canonical}{ogimage}{font_preload}<link rel="icon" href="{link(path,'logo.svg')}" type="image/svg+xml"><link rel="stylesheet" href="{versioned_link(path,'assets/styles.css')}"><script>document.documentElement.classList.add('js');</script><script src="{versioned_link(path,'assets/main.js')}" defer></script><script type="application/ld+json">{json.dumps(schema,ensure_ascii=False).replace('<','&lt;')}</script></head>
 <body><a class="skip" href="#main">К содержанию</a>
 <div class="wrap">
  <header class="site-header">
@@ -247,17 +251,42 @@ body+='''
   <h2 id="request-form-title">Оставить заявку</h2>
   <div class="request-form-content">
   <div id="request-form-status" class="request-form-status" role="status"></div>
+  <p id="request-form-alternative" hidden><a class="text-link" href="#contact-methods-title">Другие способы связи ↗</a></p>
   <script data-b24-form="inline/25/h8a51a" data-b24-form-telemetry-sign="v1:25:site.bd5cb31496b0978c850786c0526098386316cc31190a6437e3d5b2a90988bd56" data-skip-moving="true">
-  (function (w, d, u) {
-    var s = d.createElement('script');
-    s.async = true;
-    s.src = u + '?' + (Date.now() / 180000 | 0);
-    s.addEventListener('error', function () {
-      d.getElementById('request-form-status').textContent = 'Форма не загрузилась. Вы можете связаться со мной через Telegram или почту.';
-    });
-    var h = d.getElementsByTagName('script')[0];
-    h.parentNode.insertBefore(s, h);
-  })(window, document, 'https://cdn-ru.bitrix24.ru/b38606320/crm/form/loader_25.js');
+  (() => {
+    const mount = document.querySelector('.request-form-content');
+    const status = document.getElementById('request-form-status');
+    const alternative = document.getElementById('request-form-alternative');
+    const showFailure = () => {
+      status.textContent = 'Форма не загрузилась. Вы можете связаться со мной через Telegram или почту.';
+      alternative.hidden = false;
+    };
+    function checkForm() {
+      const hasForm = Array.from(mount.querySelectorAll('form, iframe')).some(element => {
+        const {width, height} = element.getBoundingClientRect();
+        return width > 0 && height > 0 && getComputedStyle(element).visibility === 'visible';
+      });
+      if (!hasForm) return false;
+      window.clearTimeout(timer);
+      observer.disconnect();
+      status.textContent = '';
+      alternative.hidden = true;
+      return true;
+    }
+    status.textContent = 'Загружаем форму Битрикс24…';
+    const observer = new MutationObserver(checkForm);
+    const timer = window.setTimeout(() => { if (!checkForm()) showFailure(); }, 15000);
+    observer.observe(mount, {childList:true, subtree:true, attributes:true, attributeFilter:['class','style','hidden']});
+    const loader = document.createElement('script');
+    loader.async = true;
+    loader.src = 'https://cdn-ru.bitrix24.ru/b38606320/crm/form/loader_25.js?' + Math.floor(Date.now() / 180000);
+    loader.addEventListener('error', () => {
+      window.clearTimeout(timer);
+      observer.disconnect();
+      showFailure();
+    }, {once:true});
+    document.head.append(loader);
+  })();
   </script>
   <noscript><p>Для загрузки формы нужен JavaScript. Вы можете связаться со мной через Telegram или почту.</p></noscript>
   </div>

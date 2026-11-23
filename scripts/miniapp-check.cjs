@@ -22,7 +22,7 @@ function sdk(theme) {
     +'sendData(data){window.__sent.push(data)}}};';
 }
 
-async function mockBitrix(context,{failForm=false}={}) {
+async function mockBitrix(context,{failForm=false,delayForm=false}={}) {
   const requests={form:0,widget:0};
   await context.route(formURL+'*',route=>{
     requests.form++;
@@ -31,10 +31,14 @@ async function mockBitrix(context,{failForm=false}={}) {
       'const marker=document.querySelector("script[data-b24-form]");'
       +'window.__formMountedVisible=!document.getElementById("request-view").hidden;'
       +'window.__formAttributes=[marker.dataset.b24Form,marker.dataset.b24FormTelemetrySign,marker.dataset.skipMoving];'
+      +'function renderMockForm(){'
       +'const form=document.createElement("form");form.id="mock-bitrix-form";'
       +'form.innerHTML='+JSON.stringify('<label>Имя<input class="b24-form-control" required></label><button type="submit">Отправить</button>')+';'
       +'form.addEventListener("submit",event=>{event.preventDefault();window.__bitrixSubmit=(window.__bitrixSubmit||0)+1});'
-      +'marker.after(form);'
+      +'marker.after(form);}'
+      +(delayForm
+        ? 'const frame=document.createElement("iframe");frame.id="mock-helper-frame";frame.hidden=true;marker.after(frame);window.__finishLoadingForm=renderMockForm;'
+        : 'renderMockForm();')
     });
   });
   await context.route(widgetURL+'*',route=>{
@@ -55,7 +59,7 @@ async function mockBitrix(context,{failForm=false}={}) {
   let layouts=0;
   try {
     for (const theme of ['light','dark']) {
-      for (const width of [320,390,768]) {
+      for (const width of [320,390,768,1440]) {
         const context=await browser.newContext({isMobile:width<=390,hasTouch:true,viewport:{width,height:844}});
         await context.route(sdkURL,route=>route.fulfill({contentType:'application/javascript',body:sdk(theme)}));
         const requests=await mockBitrix(context);
@@ -166,8 +170,31 @@ async function mockBitrix(context,{failForm=false}={}) {
     assert.equal(page.url(),base);
     await failed.close();
 
+    const slow=await browser.newContext({isMobile:true,hasTouch:true,viewport:{width:390,height:844}});
+    await slow.route(sdkURL,route=>route.abort());
+    const slowRequests=await mockBitrix(slow,{delayForm:true});
+    const phone=await slow.newPage();
+    phone.on('pageerror',error=>errors.push(error.message));
+    await phone.clock.install();
+    await phone.goto(base);
+    await phone.locator('#hero-request').tap();
+    await phone.locator('#mock-helper-frame').waitFor({state:'attached'});
+    assert.equal(await phone.locator('#request-form-status').isVisible(),true);
+    await phone.clock.fastForward(15100);
+    await phone.getByText('Не удалось загрузить форму.',{exact:false}).waitFor();
+    await phone.locator('#request-contact-fallback').tap();
+    assert.equal(await phone.locator('#contact-view').isVisible(),true);
+    await phone.evaluate(()=>window.__finishLoadingForm());
+    assert.equal(await phone.locator('#request-form-status').getAttribute('hidden'),null);
+    await phone.locator('[data-view="request"]').tap();
+    await phone.locator('#mock-bitrix-form').waitFor();
+    assert.equal(await phone.locator('#request-form-status').isHidden(),true);
+    assert.equal(await phone.locator('#request-contact-fallback').isHidden(),true);
+    assert.deepEqual(slowRequests,{form:1,widget:1});
+    await slow.close();
+
     assert.deepEqual(errors,[]);
-    console.log('PASS: '+layouts+' theme and viewport layouts, hero navigation, direct contacts and social links, lazy Bitrix24 form and persistent chat, draft preservation, mobile touch, failure fallbacks and no external navigation during applications.');
+    console.log('PASS: '+layouts+' theme and viewport layouts, hero navigation, direct contacts and social links, lazy Bitrix24 form and persistent chat, draft preservation, mobile touch, failure and delayed-form recovery, and no external navigation during applications.');
   } finally {
     await browser.close();
   }

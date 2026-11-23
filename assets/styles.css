@@ -437,7 +437,7 @@ h1,h2 {
   .home-service-list {grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media(max-width:800px) {
-  html.nav-ready {scroll-padding-top:76px}
+  html.nav-ready {scroll-padding-top:var(--sticky-header-scroll-padding,76px)}
   .site-header {padding:10px 0;gap:8px;background:var(--paper)}
   .nav-ready .site-header {position:sticky;top:0;z-index:10}
   .site-header .brand {gap:6px;font-size:15px}
@@ -490,6 +490,9 @@ h1,h2 {
   .site-header #main-nav a::before,.site-header #main-nav a[aria-current=page]::after {display:none}
   .footer {align-items:flex-start}
   .contact-layout,.payment-grid,.updates-feed {grid-template-columns:1fr}
+}
+@media(max-width:360px) {
+  html.nav-ready {scroll-padding-top:var(--sticky-header-scroll-padding,114px)}
 }
 @media(max-width:600px) {
   .hero {display:block;padding:23px 17px 16px}

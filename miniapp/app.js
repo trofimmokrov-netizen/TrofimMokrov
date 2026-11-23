@@ -34,13 +34,20 @@
     };
     const fallbackTimer = window.setTimeout(showFailure, 15000);
     const observer = new MutationObserver(() => {
-      if (!mount.querySelector('form, iframe')) return;
+      const visibleForm = Array.from(mount.querySelectorAll('form, iframe')).some(element =>
+        element.offsetWidth > 0 && element.offsetHeight > 0 && getComputedStyle(element).visibility === 'visible');
+      if (!visibleForm) return;
       window.clearTimeout(fallbackTimer);
       observer.disconnect();
       status.hidden = true;
       fallback.hidden = true;
     });
-    observer.observe(mount, {childList: true, subtree: true});
+    observer.observe($('request-view'), {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['hidden', 'style', 'class'],
+    });
     loadBitrixScript(formLoader, 180000, () => {
       window.clearTimeout(fallbackTimer);
       observer.disconnect();

@@ -22,6 +22,22 @@ const base=(process.env.SITE_URL||'http://127.0.0.1:8000').replace(/\/$/,'')+'/'
    count++;
   }
  }
+ const fragmentUnobstructed=()=>page.evaluate(()=>{
+  const top=document.getElementById(location.hash.slice(1))?.getBoundingClientRect().top;
+  const header=document.querySelector('.site-header').getBoundingClientRect();
+  return top>=header.bottom-1&&top<innerHeight;
+ });
+ for(const width of [320,390]){
+  await page.setViewportSize({width,height:844});
+  await page.goto(base+'contact.html#request-form');
+  if(!await fragmentUnobstructed())throw Error('Contact form fragment under header at '+width+'px');
+  await page.goto(base);
+  await page.locator('.hero .form-action').click();await page.waitForURL('**/contact.html#request-form');
+  if(!await fragmentUnobstructed())throw Error('Contact form action lands under header at '+width+'px');
+  await page.goto(base+'services.html');
+  await page.locator('.service-index a[href="#business-system"]').click();await page.waitForURL('**/services.html#business-system');
+  if(!await fragmentUnobstructed())throw Error('On-page service fragment under header at '+width+'px');
+ }
  await page.setViewportSize({width:390,height:844});await page.goto(base);
  const menu=page.getByRole('button',{name:'Меню'});await menu.click();if(await menu.getAttribute('aria-expanded')!=='true')throw Error('Menu did not open');
  await page.keyboard.press('Escape');if(await menu.getAttribute('aria-expanded')!=='false')throw Error('Escape did not close menu');
@@ -34,10 +50,29 @@ const base=(process.env.SITE_URL||'http://127.0.0.1:8000').replace(/\/$/,'')+'/'
  if(!await nojs.getByRole('navigation',{name:'Основная навигация'}).isVisible())throw Error('No-JS navigation hidden');
  if(!await nojs.getByRole('navigation',{name:'Содержание статьи'}).isVisible())throw Error('TOC hidden');
  if(!await nojs.locator('.reading').isVisible())throw Error('No-JS content hidden');
- const blocked=await browser.newContext({viewport:{width:390,height:844}});const fail=await blocked.newPage();await fail.route('**/assets/main.js',r=>r.abort());await fail.goto(base);if(!await fail.locator('#main-nav').isVisible())throw Error('Navigation hidden after script failure');
+ const blocked=await browser.newContext({viewport:{width:390,height:844}});const fail=await blocked.newPage();await fail.route(url=>url.pathname.endsWith('/assets/main.js'),r=>r.abort());await fail.goto(base);if(!await fail.locator('#main-nav').isVisible())throw Error('Navigation hidden after script failure');
+ const fallbackContext=await browser.newContext({viewport:{width:390,height:844},reducedMotion:'reduce'});
+ await fallbackContext.route(url=>url.pathname.endsWith('/crm/form/loader_25.js'),route=>route.fulfill({
+  contentType:'application/javascript',
+  body:'const helper=document.createElement("iframe");helper.id="mock-bitrix-helper";helper.hidden=true;document.currentScript.ownerDocument.querySelector("[data-b24-form]").after(helper);',
+ }));
+ const fallback=await fallbackContext.newPage();
+ await fallback.clock.install();
+ await fallback.goto(base+'contact.html#request-form');
+ await fallback.locator('#mock-bitrix-helper').waitFor({state:'attached'});
+ await fallback.clock.fastForward(15100);
+ await fallback.getByRole('link',{name:'Другие способы связи'}).waitFor();
+ await fallback.evaluate(()=>{
+  const form=document.createElement('form');
+  form.innerHTML='<label>Имя <input name="name"></label>';
+  document.querySelector('[data-b24-form]').after(form);
+ });
+ await fallback.locator('#request-form-alternative').waitFor({state:'hidden'});
+ await fallback.locator('#request-form input').waitFor();
+ await fallbackContext.close();
  await page.goto(base); if(await page.locator('h1').evaluate(el=>getComputedStyle(el).animationName)!=='none')throw Error('Reduced-motion animation');
  await page.keyboard.press('Tab');if(!await page.locator('.skip').evaluate(el=>document.activeElement===el))throw Error('Skip link not first keyboard target');
  if(errors.length)throw Error(errors.join('\n'));
- console.log(`PASS: ${count} page/viewport checks; image loading, mobile menu, Escape, navigation, FAQ, no-JS, script-failure fallback; no JavaScript errors.`);
+ console.log(`PASS: ${count} page/viewport checks; image loading, mobile menu, Escape, navigation, fragment offsets, Bitrix24 fallback and recovery, FAQ, no-JS, script-failure fallback; no JavaScript errors.`);
  await browser.close();
 })().catch(e=>{console.error(e);process.exit(1)});

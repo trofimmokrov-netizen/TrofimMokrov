@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#f5f5ee"><title>Контакты — Трофим Мокров</title><meta name="description" content="Обсудить сайт, автоматизацию или контент с Трофимом Мокровым: Telegram @TrofimMokrov, trofimmokrov@gmail.com, +7 (915) 998-25-54."><meta property="og:title" content="Контакты — Трофим Мокров"><meta property="og:description" content="Обсудить сайт, автоматизацию или контент с Трофимом Мокровым: Telegram @TrofimMokrov, trofimmokrov@gmail.com, +7 (915) 998-25-54."><meta property="og:type" content="website"><meta property="og:locale" content="ru_RU"><meta property="og:site_name" content="Трофим Мокров"><link rel="canonical" href="https://trofimmokrov-netizen.github.io/TrofimMokrov/contact.html">
-<meta property="og:url" content="https://trofimmokrov-netizen.github.io/TrofimMokrov/contact.html"><meta property="og:image" content="https://trofimmokrov-netizen.github.io/TrofimMokrov/assets/share-card.png"><meta property="og:image:secure_url" content="https://trofimmokrov-netizen.github.io/TrofimMokrov/assets/share-card.png"><meta property="og:image:type" content="image/png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Трофим Мокров — сайты, AI и автоматизация"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://trofimmokrov-netizen.github.io/TrofimMokrov/assets/share-card.png"><link rel="icon" href="logo.svg" type="image/svg+xml"><link rel="stylesheet" href="assets/styles.css"><script>document.documentElement.classList.add('js');</script><script src="assets/main.js" defer></script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "Person", "name": "Трофим Мокров", "email": "trofimmokrov@gmail.com", "telephone": "+79159982554", "sameAs": ["https://t.me/TrofimMokrov"], "url": "https://trofimmokrov-netizen.github.io/TrofimMokrov/"}</script></head>
+<meta property="og:url" content="https://trofimmokrov-netizen.github.io/TrofimMokrov/contact.html"><meta property="og:image" content="https://trofimmokrov-netizen.github.io/TrofimMokrov/assets/share-card.png"><meta property="og:image:secure_url" content="https://trofimmokrov-netizen.github.io/TrofimMokrov/assets/share-card.png"><meta property="og:image:type" content="image/png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Трофим Мокров — сайты, AI и автоматизация"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://trofimmokrov-netizen.github.io/TrofimMokrov/assets/share-card.png"><link rel="icon" href="logo.svg" type="image/svg+xml"><link rel="stylesheet" href="assets/styles.css?v=38645e9eae77"><script>document.documentElement.classList.add('js');</script><script src="assets/main.js?v=8da073e69fd4" defer></script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "Person", "name": "Трофим Мокров", "email": "trofimmokrov@gmail.com", "telephone": "+79159982554", "sameAs": ["https://t.me/TrofimMokrov"], "url": "https://trofimmokrov-netizen.github.io/TrofimMokrov/"}</script></head>
 <body><a class="skip" href="#main">К содержанию</a>
 <div class="wrap">
  <header class="site-header">
@@ -17,17 +17,42 @@
   <h2 id="request-form-title">Оставить заявку</h2>
   <div class="request-form-content">
   <div id="request-form-status" class="request-form-status" role="status"></div>
+  <p id="request-form-alternative" hidden><a class="text-link" href="#contact-methods-title">Другие способы связи <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 19 19 5M5 5h14v14"/></svg></a></p>
   <script data-b24-form="inline/25/h8a51a" data-b24-form-telemetry-sign="v1:25:site.bd5cb31496b0978c850786c0526098386316cc31190a6437e3d5b2a90988bd56" data-skip-moving="true">
-  (function (w, d, u) {
-    var s = d.createElement('script');
-    s.async = true;
-    s.src = u + '?' + (Date.now() / 180000 | 0);
-    s.addEventListener('error', function () {
-      d.getElementById('request-form-status').textContent = 'Форма не загрузилась. Вы можете связаться со мной через Telegram или почту.';
-    });
-    var h = d.getElementsByTagName('script')[0];
-    h.parentNode.insertBefore(s, h);
-  })(window, document, 'https://cdn-ru.bitrix24.ru/b38606320/crm/form/loader_25.js');
+  (() => {
+    const mount = document.querySelector('.request-form-content');
+    const status = document.getElementById('request-form-status');
+    const alternative = document.getElementById('request-form-alternative');
+    const showFailure = () => {
+      status.textContent = 'Форма не загрузилась. Вы можете связаться со мной через Telegram или почту.';
+      alternative.hidden = false;
+    };
+    function checkForm() {
+      const hasForm = Array.from(mount.querySelectorAll('form, iframe')).some(element => {
+        const {width, height} = element.getBoundingClientRect();
+        return width > 0 && height > 0 && getComputedStyle(element).visibility === 'visible';
+      });
+      if (!hasForm) return false;
+      window.clearTimeout(timer);
+      observer.disconnect();
+      status.textContent = '';
+      alternative.hidden = true;
+      return true;
+    }
+    status.textContent = 'Загружаем форму Битрикс24…';
+    const observer = new MutationObserver(checkForm);
+    const timer = window.setTimeout(() => { if (!checkForm()) showFailure(); }, 15000);
+    observer.observe(mount, {childList:true, subtree:true, attributes:true, attributeFilter:['class','style','hidden']});
+    const loader = document.createElement('script');
+    loader.async = true;
+    loader.src = 'https://cdn-ru.bitrix24.ru/b38606320/crm/form/loader_25.js?' + Math.floor(Date.now() / 180000);
+    loader.addEventListener('error', () => {
+      window.clearTimeout(timer);
+      observer.disconnect();
+      showFailure();
+    }, {once:true});
+    document.head.append(loader);
+  })();
   </script>
   <noscript><p>Для загрузки формы нужен JavaScript. Вы можете связаться со мной через Telegram или почту.</p></noscript>
   </div>

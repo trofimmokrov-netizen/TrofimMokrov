@@ -40,7 +40,7 @@ python3 -m http.server 8000 --bind 127.0.0.1
 
 ## Проверки и документы
 
-`python3 scripts/check.py` проверяет HTML, локальные пути, метаданные, уникальность идентификаторов и ссылки. Браузерные проверки: при наличии Playwright и Chromium выполните `CHROMIUM_PATH=/usr/bin/chromium node scripts/browser-check.cjs`. Для управляемого браузера Playwright опустите CHROMIUM_PATH. Сервер должен работать; другой адрес задаётся переменной SITE_URL. Флаг `--capture` обновляет собственный скриншот в портфолио. Подробности результатов — в `docs/VALIDATION.md`.
+`python3 scripts/check.py` проверяет HTML, локальные пути, метаданные, уникальность идентификаторов и ссылки. Браузерные проверки: при наличии Playwright и Chromium выполните `CHROMIUM_PATH=/usr/bin/chromium node scripts/browser-check.cjs`. Для управляемого браузера Playwright опустите CHROMIUM_PATH. Сервер должен работать; другой адрес задаётся переменной SITE_URL. Флаг `--capture` сохраняет исходный снимок главной в `assets/site-preview.png`. Для обновления превью портфолио преобразуйте его командой `magick assets/site-preview.png -strip -quality 84 assets/site-case-preview.webp`. Подробности результатов — в `docs/VALIDATION.md`.
 
 - `docs/PRICING.md` — предварительная сетка, модель трудозатрат и ограничения исследования.
 - `docs/CONTENT-AUDIT.md` — что подтверждено и какие материалы ещё нужны.
@@ -53,7 +53,7 @@ python3 -m http.server 8000 --bind 127.0.0.1
 
 ## Регулярные проверки сайта
 
-Workflow **Site health checks** запускает сборку и тесты при обновлении `main` и в pull request. По расписанию в 03:17, 09:17, 15:17 и 21:17 по Москве он также проверяет восемь опубликованных страниц и файлов. Ручной запуск и итоги доступны во вкладке **Actions**.
+Workflow **Site health checks** запускает сборку и тесты при обновлении `main` и в pull request. После обновления `main`, по расписанию в 03:17, 09:17, 15:17 и 21:17 по Москве и при ручном запуске он также проверяет восемь опубликованных страниц и файлов. Доступность двух публичных загрузчиков Битрикс24 и наличие привязок Telegram-уведомлений отражаются в сводке **Actions**.
 
 - Для уведомлений на почту включите **Email** для **Actions** в личных настройках уведомлений GitHub.
 - Для уведомлений на телефон при сбое добавьте `TROFIM_MONITOR_BOT_TOKEN` и `TROFIM_MONITOR_CHAT_ID` в **Settings → Secrets and variables → Actions** репозитория. В личном чате с выбранным ботом сначала отправьте `/start`.

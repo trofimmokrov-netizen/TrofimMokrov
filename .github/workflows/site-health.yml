@@ -48,8 +48,20 @@ jobs:
 
       - name: Check published GitHub Pages
         id: published
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        if: github.event_name != 'pull_request'
         run: python3 scripts/check-published.py
+
+      - name: Probe Bitrix24 public loaders
+        id: bitrix
+        if: github.event_name != 'pull_request'
+        continue-on-error: true
+        run: |
+          result=0
+          for path in form/loader_25.js site_button/loader_3_gbqxj4.js; do
+            curl --fail --silent --show-error --retry 1 --max-time 12 --output /dev/null \
+              "https://cdn-ru.bitrix24.ru/b38606320/crm/$path" || result=1
+          done
+          exit "$result"
 
       - name: Write run summary
         if: always()
@@ -58,6 +70,8 @@ jobs:
           SYNTAX: ${{ steps.syntax.outcome }}
           TESTS: ${{ steps.tests.outcome }}
           PUBLISHED: ${{ steps.published.outcome }}
+          BITRIX: ${{ steps.bitrix.outcome }}
+          TELEGRAM_ALERTS: ${{ secrets.TROFIM_MONITOR_BOT_TOKEN != '' && secrets.TROFIM_MONITOR_CHAT_ID != '' }}
         run: |
           {
             printf '## Site health\n\n'
@@ -66,6 +80,12 @@ jobs:
             printf '| Python and JavaScript syntax | %s |\n' "$SYNTAX"
             printf '| Repository tests | %s |\n' "$TESTS"
             printf '| Published GitHub Pages | %s |\n' "$PUBLISHED"
+            printf '| Bitrix24 public loader checks | %s |\n' "$BITRIX"
+            if [ "$TELEGRAM_ALERTS" = true ]; then
+              printf '| Telegram alert bindings | present |\n'
+            else
+              printf '| Telegram alert bindings | incomplete |\n'
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Notify on failure when configured
