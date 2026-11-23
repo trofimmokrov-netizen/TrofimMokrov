@@ -1,0 +1,109 @@
+name: Site health checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Verify generated pages
+        id: generated
+        run: |
+          python3 scripts/build.py
+          python3 scripts/check.py
+          changes=$(git status --porcelain --untracked-files=all -- '*.html' '*.json' robots.txt sitemap.xml .nojekyll)
+          if [ -n "$changes" ]; then
+            printf 'Generated files differ from the checkout.\n%s\n' "$changes"
+            exit 1
+          fi
+
+      - name: Check Python and JavaScript
+        id: syntax
+        run: |
+          python3 -m compileall -q scripts telegram_bot leadfinder
+          for script in assets/main.js miniapp/app.js scripts/*-check.cjs; do
+            node --check "$script"
+          done
+
+      - name: Run repository tests
+        id: tests
+        run: |
+          python3 -m unittest discover -s telegram_bot/tests
+          python3 -m unittest discover -s leadfinder/tests
+
+      - name: Check published GitHub Pages
+        id: published
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: python3 scripts/check-published.py
+
+      - name: Write run summary
+        if: always()
+        env:
+          GENERATED: ${{ steps.generated.outcome }}
+          SYNTAX: ${{ steps.syntax.outcome }}
+          TESTS: ${{ steps.tests.outcome }}
+          PUBLISHED: ${{ steps.published.outcome }}
+        run: |
+          {
+            printf '## Site health\n\n'
+            printf '| Check | Result |\n| --- | --- |\n'
+            printf '| Generated pages | %s |\n' "$GENERATED"
+            printf '| Python and JavaScript syntax | %s |\n' "$SYNTAX"
+            printf '| Repository tests | %s |\n' "$TESTS"
+            printf '| Published GitHub Pages | %s |\n' "$PUBLISHED"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Notify on failure when configured
+        if: failure() && github.ref == 'refs/heads/main'
+        env:
+          TROFIM_MONITOR_BOT_TOKEN: ${{ secrets.TROFIM_MONITOR_BOT_TOKEN }}
+          TROFIM_MONITOR_CHAT_ID: ${{ secrets.TROFIM_MONITOR_CHAT_ID }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import re
+          import urllib.request
+
+          token = os.environ.get('TROFIM_MONITOR_BOT_TOKEN', '')
+          chat = os.environ.get('TROFIM_MONITOR_CHAT_ID', '')
+          if not token or not chat:
+              raise SystemExit(0)
+          if not re.fullmatch(r'[0-9]+:[A-Za-z0-9_-]+', token) or not re.fullmatch(r'-?[0-9]+', chat):
+              print('::warning::Telegram alert settings are invalid.')
+              raise SystemExit(0)
+          run_url = '{GITHUB_SERVER_URL}/{GITHUB_REPOSITORY}/actions/runs/{GITHUB_RUN_ID}'.format_map(os.environ)
+          payload = json.dumps({
+              'chat_id': chat,
+              'text': 'Проверка сайта завершилась ошибкой: ' + run_url,
+              'link_preview_options': {'is_disabled': True},
+          }).encode('utf-8')
+          request = urllib.request.Request(
+              'https://api.telegram.org/bot' + token + '/sendMessage',
+              data=payload,
+              headers={'Content-Type': 'application/json'},
+          )
+          try:
+              with urllib.request.urlopen(request, timeout=10) as response:
+                  reply = json.load(response)
+                  if not isinstance(reply, dict) or reply.get('ok') is not True:
+                      raise OSError('unsuccessful')
+              print('Telegram failure alert sent.')
+          except (OSError, ValueError):
+              print('::warning::Telegram failure alert could not be delivered.')
+          PY
