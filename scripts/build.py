@@ -36,11 +36,14 @@ SOCIAL_PROFILES=(
  ('instagram','Instagram',icon('M7 3h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4zM15.5 12a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0zM17.5 6.5h.01')),
  ('telegram','Telegram',icon('M21 3 3 10.5l6.5 2.7L18 7l-6.5 8 6 5L21 3zM9.5 13.2l2 6 2.4-2.2')),
 )
+def social_profile(key,label,symbol):
+ url=site[key]
+ handle='@'+urlsplit(url).path.strip('/')
+ return (f'<a class="social-link social-link--{key}" href="{e(url,quote=True)}" target="_blank" rel="noopener noreferrer">'
+         f'<span class="social-icon">{symbol}</span><span class="social-profile"><strong>{label}</strong>'
+         f'<span class="social-handle">{e(handle)}</span></span><span class="social-arrow" aria-hidden="true">↗</span></a>')
 def social_links():
- return '<nav class="social-links" aria-label="Социальные сети">'+''.join(
-  f'<a class="social-link" href="{e(site[key],quote=True)}" target="_blank" rel="noopener noreferrer">{symbol}{label}</a>'
-  for key,label,symbol in SOCIAL_PROFILES
- )+'</nav>'
+ return '<nav class="social-links" aria-label="Социальные сети">'+''.join(social_profile(*profile) for profile in SOCIAL_PROFILES)+'</nav>'
 NAV=[('index.html','Главная'),('about.html','Обо мне'),('services.html','Услуги и цены'),('portfolio.html','Портфолио'),('articles.html','Статьи'),('updates.html','Обновления'),('contact.html','Контакты')]
 outputs=[]
 def href(current,target):
@@ -85,7 +88,9 @@ def ai_spotlight():return '''<section class="ai-spotlight" data-reveal><div><div
 p='index.html'
 body=f'''<section class="hero">{eyebrow('Для бизнеса, специалистов и частных клиентов')}<h1>Меньше рутины.<br>Больше <em>возможностей.</em></h1><div class="hero-bottom"><div class="hero-intro">{portrait(p,compact=True)}<div><p class="lead">Я Трофим Мокров. Помогаю компаниям и частным клиентам использовать AI в работе: подключаю контент-агентов, создаю сайты, настраиваю Telegram-ботов и автоматизирую рутину. Решение подбираю под вашу задачу, а не под готовый шаблон.</p><div class="actions"><a class="button" href="{bot_link()}" target="_blank" rel="noopener noreferrer">Оставить заявку в боте ↗</a><a class="button secondary" href="services.html">Услуги и цены</a></div>{social_links()}</div></div><div class="hero-note"><span class="sr-only">Сайты, контент и автоматизация под вашу задачу.</span><div class="living-note" aria-hidden="true"><span class="note-kicker">ТЕХНОЛОГИИ ПОД ВАШ БИЗНЕС</span><div class="phrase-stack"><span class="living-phrase is-current">Идеи становятся сайтами.</span><span class="living-phrase">Контент обретает характер.</span><span class="living-phrase">Рутина становится проще.</span></div></div><button class="motion-toggle" type="button" aria-label="Остановить смену фраз" aria-pressed="false" hidden>Пауза</button></div></div><div class="visual"><img src="assets/brand-art.webp" width="1536" height="1024" fetchpriority="high" alt="Абстрактная скульптура с переплетёнными вершинами в зелёных тонах"><div class="visual-copy"><h2>Ваш следующий<br>шаг — системный.</h2><p>От одной настройки до связанной цифровой инфраструктуры.</p></div><div class="visual-caption">Концептуальная иллюстрация бренда</div></div></section>
 <section class="section"><div class="section-head"><div>{eyebrow('01 / Чем могу помочь')}<h2>От точечной задачи<br>до целой системы.</h2></div><p>Начать можно с одного инструмента. Расширять — когда в этом появляется смысл.</p></div><div class="grid">'''
-body=body.replace('<section class="section"><div class="section-head">',ai_spotlight()+'<section class="section"><div class="section-head">',1)
+system_service=next(service for service in services if service['id']=='business-system')
+system_offer=f'''<section class="dark system-offer" aria-labelledby="system-title" data-reveal><div>{eyebrow('Сайт и CRM для бизнеса')}<h2 id="system-title">{e(system_service['name'])}</h2><p>{e(system_service['summary'])}</p></div><div class="system-offer-price"><div class="price">{e(system_service['price'])}<small>{e(system_service['unit'])}</small></div><a class="button" href="services.html#{system_service['id']}">Что входит в настройку ↗</a></div></section>'''
+body=body.replace('<section class="section"><div class="section-head">',ai_spotlight()+system_offer+'<section class="section"><div class="section-head">',1)
 for s in services:
  body+=f'''<article class="card" data-reveal><span class="card-number">{s['number']} / {e(s['name'])}</span><div class="icon" aria-hidden="true">{s['icon']}</div><h3>{e(s['name'])}</h3><p>{e(s['summary'])}</p><div class="price">{e(s['price'])}<small>{e(s['unit'])}</small></div><a class="text-link" href="services.html#{s['id']}">Что входит ↗</a></article>'''
 body+='''</div><p class="note">Цены относятся к указанному стартовому объёму. Состав, сроки, правки и поддержка согласуются до начала работы. Сторонние сервисы оплачиваются отдельно.</p></section>'''
@@ -139,20 +144,14 @@ for a in articles:
 # Contact
 p='contact.html';body=heading('Контакты','Начнём с простого<br>разговора о задаче.','Оставьте заявку в боте или напишите лично в Telegram. Если предпочитаете почту или звонок — контакты ниже.')
 body+='<section class="section split"><div class="contact-list">'
-contact_methods=[('Оставить заявку в боте','@'+bot_address.path.lstrip('/'),bot_link(),'')]
-for key,label,symbol in SOCIAL_PROFILES:
- url=site[key]
- if key=='telegram':
-  label+=' — написать лично'
- contact_methods.append((label,'@'+urlsplit(url).path.strip('/'),url,symbol))
-contact_methods.extend([
- ('Электронная почта',site['email'],'mailto:'+site['email'],''),
- ('Телефон',site['phone_display'],'tel:'+site['phone'],''),
-])
-for label,value,url,symbol in contact_methods:
+body+=''.join(social_profile(*profile) for profile in SOCIAL_PROFILES)
+for label,value,url in [
+ ('Оставить заявку в боте','@'+bot_address.path.lstrip('/'),bot_link()),
+ ('Электронная почта',site['email'],'mailto:'+site['email']),
+ ('Телефон',site['phone_display'],'tel:'+site['phone']),
+]:
  external=' target="_blank" rel="noopener noreferrer"' if url.startswith('https') else ''
- badge=f'<span class="contact-profile-icon">{symbol}</span>' if symbol else ''
- body+=f'<a class="contact-item" href="{e(url,quote=True)}"{external}>{badge}<span class="contact-item-label"><small>{e(label)}</small>{e(value)}</span><span aria-hidden="true">↗</span></a>'
+ body+=f'<a class="contact-item" href="{e(url,quote=True)}"{external}><span><small>{e(label)}</small>{e(value)}</span><span aria-hidden="true">↗</span></a>'
 body+='''</div><div><h2>Что написать<br>в первом сообщении</h2><ol><li>Чем занимаетесь и кому помогаете.</li><li>Какую задачу хотите решить.</li><li>Что уже есть: сайт, площадки, инструменты.</li><li>Какие ограничения по объёму и бюджету важно учесть.</li></ol><p class="note">Не отправляйте пароли, ключи доступа и личные данные клиентов. При необходимости отдельно согласуем безопасный способ доступа.</p></div></section>'''
 render(p,'Контакты','Обсудить сайт, автоматизацию или контент с Трофимом Мокровым: Telegram @TrofimMokrov, trofimmokrov@gmail.com, +7 (915) 998-25-54.',body)
 # Owner-approved updates from the private Telegram publishing queue.
