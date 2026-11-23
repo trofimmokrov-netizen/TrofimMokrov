@@ -7,14 +7,13 @@
   <meta name="description" content="Услуги Трофима Мокрова: выберите задачу, посмотрите стоимость и оставьте заявку в Telegram.">
   <title>Трофим · услуги и заявки</title>
   <link rel="icon" href="../logo.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="app.css?v=20261018-pilot-bots">
+  <link rel="stylesheet" href="app.css?v=20261123-mobile">
   <script id="telegram-sdk" src="https://telegram.org/js/telegram-web-app.js" async referrerpolicy="no-referrer"></script>
-  <script src="app.js?v=20261018-pilot-bots" defer></script>
+  <script src="app.js?v=20261123-mobile" defer></script>
 </head>
 <body>
   <header class="topbar">
     <a class="brand" href="#services" aria-label="Трофим — услуги"><img src="../logo.svg" width="36" height="36" alt=""><span>Трофим<small>Сайты · AI · Автоматизация</small></span></a>
-    <span class="badge">Mini App</span>
   </header>
   <main>
     <p id="context-note" class="notice" role="status">Загружаем услуги…</p>
@@ -40,7 +39,7 @@
         <button class="button full" type="submit" id="review-button" disabled>Проверить заявку →</button>
       </form>
       <div id="review" class="review" hidden>
-        <span class="eyebrow">Всё верно?</span><h2>Проверьте заявку</h2>
+        <h2 id="review-title" tabindex="-1">Проверьте заявку</h2>
         <dl><dt>Формат</dt><dd id="review-format"></dd><dt>Направление</dt><dd id="review-service"></dd><dt>Задача</dt><dd id="review-details"></dd><dt>Контакт</dt><dd id="review-contact"></dd><dt id="review-portfolio-label" hidden>Портфолио</dt><dd id="review-portfolio" hidden></dd></dl>
         <p id="review-pilot-note" class="fine" hidden></p>
         <p class="fine">После отправки приложение закроется. Бот сообщит номер сохранённой заявки в чате.</p>

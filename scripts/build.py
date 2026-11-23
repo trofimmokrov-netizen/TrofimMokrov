@@ -32,16 +32,18 @@ ICONS={
  '≋':icon('M3 5h18M3 12h13M3 19h18'),
  '⊞':icon('M3 3h18v18H3zM12 3v18M3 12h18'),
  '◇':icon('m12 3 9 9-9 9-9-9z')}
+TELEGRAM_ICON=icon('M21 3 3 10.5l6.5 2.7L18 7l-6.5 8 6 5L21 3zM9.5 13.2l2 6 2.4-2.2')
+MENU_ICON=icon('M4 7h16M4 12h16M4 17h16')
 SOCIAL_PROFILES=(
  ('instagram','Instagram',icon('M7 3h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4zM15.5 12a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0zM17.5 6.5h.01')),
- ('telegram','Telegram',icon('M21 3 3 10.5l6.5 2.7L18 7l-6.5 8 6 5L21 3zM9.5 13.2l2 6 2.4-2.2')),
+ ('telegram','Личный Telegram',TELEGRAM_ICON),
 )
-def social_profile(key,label,symbol):
+def social_profile(key,label,symbol,detailed=False):
  url=site[key]
- handle='@'+urlsplit(url).path.strip('/')
- return (f'<a class="social-link social-link--{key}" href="{e(url,quote=True)}" target="_blank" rel="noopener noreferrer">'
-         f'<span class="social-icon">{symbol}</span><span class="social-profile"><strong>{label}</strong>'
-         f'<span class="social-handle">{e(handle)}</span></span><span class="social-arrow" aria-hidden="true">↗</span></a>')
+ if detailed:
+  handle='@'+urlsplit(url).path.strip('/')
+  label=f'<span class="social-profile"><strong>{label}</strong><span class="social-handle">{e(handle)}</span></span>'
+ return f'<a class="social-link" href="{e(url,quote=True)}"><span class="social-icon">{symbol}</span>{label}</a>'
 def social_links():
  return '<nav class="social-links" aria-label="Социальные сети">'+''.join(social_profile(*profile) for profile in SOCIAL_PROFILES)+'</nav>'
 NAV=[('index.html','Главная'),('about.html','Обо мне'),('services.html','Услуги и цены'),('portfolio.html','Портфолио'),('articles.html','Статьи'),('updates.html','Обновления'),('contact.html','Контакты')]
@@ -50,14 +52,16 @@ def href(current,target):
  if current=='404.html' and base:return base+'/'+target
  return os.path.relpath(ROOT/target,(ROOT/current).parent).replace(os.sep,'/')
 def link(current,target):return e(href(current,target),quote=True)
-def portrait(current,compact=False):
- return f'''<figure class="owner-portrait{' compact' if compact else ''}"><img src="{link(current,'assets/trofim-mokrov-portrait.jpg')}" width="1024" height="1536" alt="Трофим Мокров" decoding="async"><figcaption>Трофим Мокров<span>Сайты · AI · Автоматизация</span></figcaption></figure>'''
+def portrait(current):
+ return f'''<figure class="owner-portrait"><img src="{link(current,'assets/trofim-mokrov-portrait.jpg')}" width="1024" height="1536" alt="{e(site['name'])}" decoding="async"><figcaption>{e(site['name'])}<span>{e(site['tagline'])}</span></figcaption></figure>'''
 def bot_link(service_id=None):
  payload='service_'+service_id if service_id else 'site'
  if not re.fullmatch('[A-Za-z0-9_-]{1,64}',payload):raise ValueError('Invalid Telegram start payload')
  return e(bot_url+'?start='+payload,quote=True)
+def telegram_action(service_id=None):
+ return f'<a class="button telegram-action" href="{bot_link(service_id)}">{TELEGRAM_ICON}Обсудить задачу в Telegram</a>'
 def eyebrow(text):return f'<div class="eyebrow">{e(text)}</div>'
-def contact(current,service_id=None):return f'''<section class="contact-banner" data-reveal>{eyebrow('Начнём с вашей задачи')}<h2>Расскажите, что хотите<br>сделать проще.</h2><p>Оставьте заявку в Telegram-боте или напишите лично. Опишите задачу и желаемый результат — обсудим подходящий объём, стоимость и сроки до начала работы.</p><div class="actions"><a class="button" href="{bot_link(service_id)}" target="_blank" rel="noopener noreferrer">Оставить заявку в боте <span aria-hidden="true">↗</span></a><a class="button secondary" href="{e(site['telegram'])}" target="_blank" rel="noopener noreferrer">Написать лично</a><a class="button secondary" href="mailto:{e(site['email'])}">Написать на почту</a></div></section>'''
+def contact(current,service_id=None):return f'''<section class="contact-banner" data-reveal><h2>Обсудим вашу задачу</h2><p>Расскажите, какой результат нужен. Я помогу определить объём работ, стоимость и сроки.</p><div class="actions">{telegram_action(service_id)}<a class="text-link action-link" href="{link(current,'contact.html')}#request-form">Заполнить форму ↗</a></div></section>'''
 def steps():return '''<div><article class="step"><span>01</span><div><h3>Разбираемся в задаче</h3><p>Что сейчас не работает, кто пользуется инструментами и какой результат нужен.</p></div></article><article class="step"><span>02</span><div><h3>Согласуем состав и стоимость</h3><p>Фиксируем объём, сроки, порядок правок и условия дальнейшей поддержки.</p></div></article><article class="step"><span>03</span><div><h3>Создаём и проверяем</h3><p>Проверяем результат на согласованных примерах и разбираемся, как им пользоваться.</p></div></article></div>'''
 def pilot_section(current):
  examples=''.join(f'<li>{e(item)}</li>' for item in pilot['examples'])
@@ -69,10 +73,10 @@ def article_cards(current,limit=None):
  return '<div class="grid">'+out+'</div>'
 def heading(label,title,desc):return f'<section class="page-heading">{eyebrow(label)}<h1>{title}</h1><p class="lead">{e(desc)}</p></section>'
 def render(path,title,description,body,active=None,article=False):
- if path in ('index.html','services.html','portfolio.html'):
+ if path in ('services.html','portfolio.html'):
   body=body.replace(contact(path),pilot_section(path)+contact(path),1)
  nav=''.join(f'<a href="{link(path,p)}"'+(' aria-current="page"' if p==(active or path) else '')+f'>{e(label)}</a>' for p,label in NAV)
- nav+=f'<a href="{e(bot_url,quote=True)}?start=app" target="_blank" rel="noopener noreferrer">Приложение ↗</a>'
+ nav+=f'<a href="{e(bot_url,quote=True)}?start=app">Мини-приложение ↗</a>'
  canonical=f'<link rel="canonical" href="{e(base+"/"+path)}">\n<meta property="og:url" content="{e(base+"/"+path)}">' if base else ''
  ogimage=f'<meta property="og:image" content="{e(base)}/assets/share-card.png"><meta property="og:image:secure_url" content="{e(base)}/assets/share-card.png"><meta property="og:image:type" content="image/png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Трофим Мокров — сайты, AI и автоматизация"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="{e(base)}/assets/share-card.png">' if base else ''
  full_title='Трофим Мокров — сайты, AI и автоматизация' if path=='index.html' else title+' — Трофим Мокров'
@@ -80,27 +84,73 @@ def render(path,title,description,body,active=None,article=False):
  if base:schema['url']=base+'/'
  content=f'''<!doctype html>
 <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#16201c"><title>{e(full_title)}</title><meta name="description" content="{e(description)}"><meta property="og:title" content="{e(full_title)}"><meta property="og:description" content="{e(description)}"><meta property="og:type" content="{'article' if article else 'website'}"><meta property="og:locale" content="ru_RU"><meta property="og:site_name" content="Трофим Мокров">{canonical}{ogimage}<link rel="icon" href="{link(path,'logo.svg')}" type="image/svg+xml"><link rel="stylesheet" href="{link(path,'assets/styles.css')}"><script>document.documentElement.classList.add('js');</script><script src="{link(path,'assets/main.js')}" defer></script><script type="application/ld+json">{json.dumps(schema,ensure_ascii=False).replace('<','&lt;')}</script></head>
-<body><a class="skip" href="#main">К содержанию</a><div class="wrap"><header><a class="brand" href="{link(path,'index.html')}"><img src="{link(path,'logo.svg')}" width="36" height="36" alt=""><span>Трофим Мокров<small>Сайты · AI · Автоматизация</small></span></a><button class="menu-button" type="button" aria-controls="main-nav" aria-expanded="false">Меню <span aria-hidden="true">↗</span></button><nav id="main-nav" aria-label="Основная навигация">{nav}</nav></header><main id="main">{body}</main><footer class="footer"><div>© Трофим Мокров<br>Технологии, которые работают на вас.</div><div class="footer-contact">{social_links()}<div class="footer-links"><a href="{bot_link()}" target="_blank" rel="noopener noreferrer">Бот для заявок ↗</a><a href="mailto:{e(site['email'])}">Почта ↗</a><a href="tel:{e(site['phone'])}">{e(site['phone_display'])}</a></div></div></footer></div></body></html>'''
+<body><a class="skip" href="#main">К содержанию</a>
+<div class="wrap">
+ <header class="site-header">
+  <a class="brand" href="{link(path,'index.html')}"><img src="{link(path,'logo.svg')}" width="36" height="36" alt=""><span>{e(site['name'])}</span></a>
+  <div class="header-actions">
+   <a class="header-telegram" href="{bot_link()}" aria-label="Открыть Telegram-бота">{TELEGRAM_ICON}Telegram</a>
+   <button class="menu-button" type="button" aria-controls="main-nav" aria-expanded="false" aria-label="Меню">{MENU_ICON}</button>
+  </div>
+  <nav id="main-nav" aria-label="Основная навигация">{nav}</nav>
+ </header>
+ <main id="main">{body}</main>
+ <footer class="footer">
+  <div class="footer-name">© {e(site['name'])}</div>
+  {social_links()}
+  <div class="footer-links"><a href="{bot_link()}">Бот для заявок ↗</a><a href="{link(path,'contact.html')}">Контакты</a><a href="{link(path,'contact.html')}#payment">Оплата</a></div>
+ </footer>
+</div></body></html>'''
  for symbol,svg in ICONS.items():content=content.replace(symbol,svg)
  target=ROOT/path;target.parent.mkdir(parents=True,exist_ok=True);target.write_text(content+'\n');outputs.append(path)
-def ai_spotlight():return '''<section class="ai-spotlight" data-reveal><div><div class="eyebrow">Главное направление / AI-агенты</div><h2>Контент выходит.<br>Вы занимаетесь своим делом.</h2><p>AI-агент помогает готовить материалы и публиковать их по расписанию на согласованных площадках: например, в Telegram, ВКонтакте и других соцсетях с доступными интеграциями.</p><p>Подбираем темы и стиль под ваш бизнес или личный проект. Согласуем, что можно публиковать автоматически, а что сначала проверяете вы.</p><a class="text-link" href="services.html#ai-agents">Как устроено подключение ↗</a></div><div class="agent-offer"><span class="card-number">РАЗОВОЕ ПОДКЛЮЧЕНИЕ</span><div class="agent-price">10 000 ₽</div><p>Подбор сценария, настройка и тестовая публикация.</p><div class="agent-flow"><span>Ваши темы и стиль</span><b aria-hidden="true">→</b><span>Подготовка и согласование</span><b aria-hidden="true">→</b><span>Публикация по расписанию</span></div><p class="agent-note">Площадки и объём фиксируем заранее. Подписки сервисов и дальнейшее обслуживание оплачиваются отдельно.</p></div></section>'''
-# Home
-p='index.html'
-body=f'''<section class="hero">{eyebrow('Для бизнеса, специалистов и частных клиентов')}<h1>Меньше рутины.<br>Больше <em>возможностей.</em></h1><div class="hero-bottom"><div class="hero-intro">{portrait(p,compact=True)}<div><p class="lead">Я Трофим Мокров. Помогаю компаниям и частным клиентам использовать AI в работе: подключаю контент-агентов, создаю сайты, настраиваю Telegram-ботов и автоматизирую рутину. Решение подбираю под вашу задачу, а не под готовый шаблон.</p><div class="actions"><a class="button" href="{bot_link()}" target="_blank" rel="noopener noreferrer">Оставить заявку в боте ↗</a><a class="button secondary" href="services.html">Услуги и цены</a></div>{social_links()}</div></div><div class="hero-note"><span class="sr-only">Сайты, контент и автоматизация под вашу задачу.</span><div class="living-note" aria-hidden="true"><span class="note-kicker">ТЕХНОЛОГИИ ПОД ВАШ БИЗНЕС</span><div class="phrase-stack"><span class="living-phrase is-current">Идеи становятся сайтами.</span><span class="living-phrase">Контент обретает характер.</span><span class="living-phrase">Рутина становится проще.</span></div></div><button class="motion-toggle" type="button" aria-label="Остановить смену фраз" aria-pressed="false" hidden>Пауза</button></div></div><div class="visual"><img src="assets/brand-art.webp" width="1536" height="1024" fetchpriority="high" alt="Абстрактная скульптура с переплетёнными вершинами в зелёных тонах"><div class="visual-copy"><h2>Ваш следующий<br>шаг — системный.</h2><p>От одной настройки до связанной цифровой инфраструктуры.</p></div><div class="visual-caption">Концептуальная иллюстрация бренда</div></div></section>
-<section class="section"><div class="section-head"><div>{eyebrow('01 / Чем могу помочь')}<h2>От точечной задачи<br>до целой системы.</h2></div><p>Начать можно с одного инструмента. Расширять — когда в этом появляется смысл.</p></div><div class="grid">'''
-system_service=next(service for service in services if service['id']=='business-system')
-system_offer=f'''<section class="dark system-offer" aria-labelledby="system-title" data-reveal><div>{eyebrow('Сайт и CRM для бизнеса')}<h2 id="system-title">{e(system_service['name'])}</h2><p>{e(system_service['summary'])}</p></div><div class="system-offer-price"><div class="price">{e(system_service['price'])}<small>{e(system_service['unit'])}</small></div><a class="button" href="services.html#{system_service['id']}">Что входит в настройку ↗</a></div></section>'''
-body=body.replace('<section class="section"><div class="section-head">',ai_spotlight()+system_offer+'<section class="section"><div class="section-head">',1)
-for s in services:
- body+=f'''<article class="card" data-reveal><span class="card-number">{s['number']} / {e(s['name'])}</span><div class="icon" aria-hidden="true">{s['icon']}</div><h3>{e(s['name'])}</h3><p>{e(s['summary'])}</p><div class="price">{e(s['price'])}<small>{e(s['unit'])}</small></div><a class="text-link" href="services.html#{s['id']}">Что входит ↗</a></article>'''
-body+='''</div><p class="note">Цены относятся к указанному стартовому объёму. Состав, сроки, правки и поддержка согласуются до начала работы. Сторонние сервисы оплачиваются отдельно.</p></section>'''
-body+=f'''<section class="dark" data-reveal>{eyebrow('Как это работает вместе')}<h2>Вас находят.<br>Понимают предложение.<br>Знают, куда написать.</h2><div class="flow"><span>Яндекс Карты и соцсети</span><b aria-hidden="true">→</b><span>Сайт и полезный контент</span><b aria-hidden="true">→</b><span>Обращение и обработка</span></div><p>Создаю связку из сайта, площадок, контента и рабочих процессов. Чтобы обновлять информацию и работать с обращениями было проще.</p></section><section class="section split"><div>{eyebrow('02 / Подход')}<h2>Лично разбираюсь.<br>Понятно объясняю.</h2><p class="lead">Мой фокус — контент-агенты и связанные с ними процессы: продумать сценарий, проверить запуск и объяснить, как всё устроено. При необходимости отдельно договоримся о дальнейшем сопровождении.</p><a class="text-link" href="about.html">Подробнее обо мне ↗</a></div>{steps()}</section><section class="section"><div class="section-head"><div>{eyebrow('03 / Практика')}<h2>От оформления площадок<br>до своего сайта.</h2></div><p>Сайт Ксении ZEMLYANOVVA EPOXY — разработка сайта. «Древесный замысел» — контент и помощь с настройкой. Мой сайт — собственный проект с AI-агентом.</p></div><a class="text-link" href="portfolio.html">Посмотреть проект ↗</a></section><section class="section"><div class="section-head"><div>{eyebrow('04 / Полезные материалы')}<h2>Разобраться до того,<br>как заказывать.</h2></div><a class="text-link" href="articles.html">Все статьи ↗</a></div>{article_cards(p,3)}</section><section class="section"><div class="section-head"><div>{eyebrow('05 / Частые вопросы')}<h2>Что важно знать<br>перед началом.</h2></div></div><div class="faq">'''
 faqs=[('Можно сначала посмотреть, каким будет сайт?', 'Да. Сначала показываю предварительный вариант, чтобы вы могли оценить идею и подачу. После обсуждения согласуем дальнейшую доработку, стоимость и условия оплаты. Базовый сайт с помощью AI — от 10 000 ₽.'),('Можно дополнить сайт после запуска?', 'Да. Можно начать с небольшой версии, а затем добавлять услуги, статьи, проекты и страницы. Новые задачи и их стоимость согласуются отдельно.'),('Кто следит за системой после запуска?', 'При подключении проверяю согласованный сценарий и объясняю его работу. Дальнейшее наблюдение и изменения можно поручить мне отдельно: заранее согласуем график проверок, канал связи, сроки реакции и стоимость. Постоянная доступность и устранение любых технических проблем в разовое подключение не входят.'),('AI-агент публикует во всех соцсетях?', 'Подключаем согласованные площадки, где доступны необходимые интеграции. До оплаты проверяем возможности ваших аккаунтов и фиксируем состав. Обещать одинаковую работу во всех соцсетях без такой проверки было бы некорректно.'),('Что входит в подключение AI-агента за 10 000 ₽?', 'Подбор сценария, подключение согласованных аккаунтов, настройка стиля и расписания, тестовая публикация и объяснение работы. Подписки сервисов, нестандартная разработка и дальнейшее ведение оплачиваются отдельно.'),('Можно обратиться с личной задачей, без бизнеса?', 'Да. Можно обсудить настройку компьютера или приложений, личный сайт, AI-инструменты и контент для собственного проекта. Решение и объём подбираются индивидуально.'),('Можно начать с небольшой задачи?','Да. Можно настроить одно устройство, подготовить изображение или автоматизировать один понятный процесс. Состав небольшой задачи согласуем заранее.'),('Что нужно для расчёта стоимости?','Расскажите, чем занимаетесь, какой результат нужен и какими инструментами уже пользуетесь. Примеры и ссылки помогут точнее определить объём. Пароли и персональные данные в первом сообщении не нужны.'),('Что означает цена «от»?','Это стоимость базового объёма, описанного в услуге. Дополнительные страницы, сценарии, площадки и нестандартные интеграции оцениваются отдельно до начала работы.'),('Вы гарантируете рост продаж?','Нет. Я отвечаю за согласованный результат работы: сайт, контент, настройку или сценарий. Продажи зависят также от продукта, аудитории, рекламы и обработки обращений.'),('Что со сроками, правками и поддержкой?','Сроки, количество согласований и условия поддержки определяются для конкретной задачи до начала работы. Бессрочная поддержка и неограниченные правки в тарифы не входят.')]
 bot_service=next(s for s in services if s['id']=='telegram-bots')
 faqs.extend([('Можно заказать бот и мини-приложение как TrofimAI?', 'Да. Базовая настройка под ваш стиль — от 10 000 ₽: меню, услуги, ссылки на сайт, форма заявки и уведомление владельцу. Точный состав согласуем до начала. Можно предложить свой бюджет.'),('Как оплачивается дальнейшая работа бота?',bot_service['separate'])])
-for q,a in faqs:body+=f'<details><summary>{e(q)}</summary><p>{e(a)}</p></details>'
-body+='</div></section>'+contact(p)
-render(p,'Сайты, AI и автоматизация для бизнеса','AI-агенты для контента: подключение за 10 000 ₽. Сайты, автоматизация и цифровые инструменты для бизнеса и частных клиентов — под вашу задачу.',body)
+
+def faq_section(items):
+ entries=''.join(f'<details><summary>{e(question)}</summary><p>{e(answer)}</p></details>' for question,answer in items)
+ return f'<section class="section home-faq" data-reveal><div class="section-head"><h2>Частые вопросы</h2></div><div class="faq">{entries}</div></section>'
+# Home
+p='index.html'
+featured_ids=('websites','telegram-bots','business-system','automation','ai-agents','social-actions')
+services_by_id={service['id']:service for service in services}
+featured=''.join(
+ f'''<a class="home-service" href="services.html#{service['id']}">
+ <span><strong>{e(service['name'])}</strong><span class="home-service-summary">{e(service['summary'])}</span></span>
+ <span class="home-service-price">{e(service['price'])}<span aria-hidden="true">↗</span></span></a>'''
+ for service in (services_by_id[key] for key in featured_ids)
+)
+body=f'''
+<section class="hero" aria-labelledby="home-title">
+ <div class="hero-copy">
+  {eyebrow('Сайты · Telegram · Автоматизация')}
+  <h1 id="home-title">{e(site['name'])}</h1>
+  <p class="lead">Создаю сайты и Telegram-ботов, настраиваю Битрикс24 и AI-инструменты для бизнеса. Помогу выбрать, с чего начать.</p>
+  <div class="actions hero-actions">
+   {telegram_action()}
+   <a class="text-link action-link" href="contact.html#request-form">Заполнить форму ↗</a>
+  </div>
+  {social_links()}
+ </div>
+ <div class="hero-portrait">
+  <img src="{link(p,'assets/trofim-mokrov-portrait.jpg')}" width="1024" height="1536" alt="{e(site['name'])}" decoding="async" fetchpriority="high">
+ </div>
+</section>
+<section class="section home-services" aria-labelledby="home-services-title" data-reveal>
+ <div class="section-head"><h2 id="home-services-title">Чем могу помочь</h2></div>
+ <div class="home-service-list">{featured}</div>
+ <a class="text-link action-link" href="services.html">Все услуги ↗</a>
+</section>
+<section class="section home-projects" aria-labelledby="home-projects-title" data-reveal>
+ <div>
+  <h2 id="home-projects-title">Избранные проекты</h2>
+  <p>Сайт Ксении ZEMLYANOVVA EPOXY, цифровые площадки «Древесного замысла» и эта визитка.</p>
+ </div>
+ <a class="text-link action-link" href="portfolio.html">Смотреть портфолио ↗</a>
+</section>
+'''
+body+=faq_section(faqs[:2]+faqs[-2:-1])+contact(p)
+render(p,'Сайты, Telegram и автоматизация','Трофим Мокров: создание сайтов и Telegram-ботов, настройка Битрикс24 и AI-инструментов для бизнеса.',body)
 # About
 p='about.html'
 body=heading('Обо мне','Технологии — под задачу.<br>Работа — с человеком.','Я Трофим Мокров. Работаю на стыке IT, искусственного интеллекта и практических задач. Помогаю бизнесу и частным клиентам подобрать и настроить цифровые инструменты.')
@@ -109,10 +159,11 @@ body=body.replace(contact(p),'''<section class="section"><div class="section-hea
 render(p,'Обо мне','Трофим Мокров: подход к созданию сайтов, автоматизации и контенту. Сначала задача бизнеса, затем инструменты и проверяемый результат.',body)
 # Services
 p='services.html';body=heading('Услуги и цены','Понятный объём.<br>Понятная стоимость.','Для бизнеса и личных задач: от подключения AI-агента за 10 000 ₽ до сайта, настройки компьютера или индивидуальной автоматизации. Ниже — состав услуг и отдельные расходы.')
+body+='<nav class="service-index" aria-label="Список услуг">'+''.join(f'<a href="#{s["id"]}">{e(s["name"])}</a>' for s in services)+'</nav>'
 for s in services:
  inc=''.join(f'<li>{e(item)}</li>' for item in s['includes'])
- body+=f'''<section class="service-detail" id="{s['id']}" data-reveal><div class="detail-top"><div>{eyebrow(s['number']+' / Услуга')}<h2>{e(s['name'])}</h2><p>{e(s['audience'])}</p></div><div class="price">{e(s['price'])}<small>{e(s['unit'])}</small></div></div><div class="detail-body"><div><h3>Что входит</h3><ul>{inc}</ul><h3>Что получите</h3><p>{e(s['result'])}</p></div><div><h3>Что увеличивает стоимость</h3><p>{e(s['extra'])}</p><h3>Отдельные расходы</h3><p>{e(s['separate'])}</p><div class="actions"><a class="button" href="{bot_link(s['id'])}" target="_blank" rel="noopener noreferrer">Оставить заявку в боте ↗</a><a class="text-link" href="{e(site['telegram'])}" target="_blank" rel="noopener noreferrer">Написать лично ↗</a></div></div></div></section>'''
-body+='<p class="note">Это ориентиры для базового объёма, а не обещание любой сложности по минимальной цене. Сроки, количество правок, критерии приёмки и поддержка согласуются до начала работы. Точные условия фиксируются для конкретного проекта.</p>'+contact(p)
+ body+=f'''<section class="service-detail" id="{s['id']}" data-reveal><div class="detail-top"><div><h2>{e(s['name'])}</h2><p>{e(s['audience'])}</p></div><div class="price">{e(s['price'])}<small>{e(s['unit'])}</small></div></div><div class="detail-body"><div><h3>Что входит</h3><ul>{inc}</ul><h3>Что получите</h3><p>{e(s['result'])}</p></div><div><h3>Что увеличивает стоимость</h3><p>{e(s['extra'])}</p><h3>Отдельные расходы</h3><p>{e(s['separate'])}</p><div class="actions">{telegram_action(s['id'])}<a class="text-link action-link" href="{e(site['telegram'])}">Написать лично ↗</a></div></div></div></section>'''
+body+='<p class="note">Цены указаны для базового объёма. Сроки, объём работ, критерии приёмки и поддержка согласуются до начала проекта.</p>'+faq_section(faqs)+contact(p)
 render(p,'Услуги и цены','Состав и стоимость услуг: сайты, автоматизация, настройка устройств, AI-изображения, посты, ведение соцсетей и запуск цифровой инфраструктуры.',body)
 # Portfolio
 p='portfolio.html';body=heading('Портфолио','Работы с понятным<br>контекстом.','Здесь — проекты с описанием задачи и выполненной работы. В каждом проекте указаны мой вклад и границы подтверждённых результатов.')
@@ -142,17 +193,60 @@ for a in articles:
  body+=f'<p class="note">Примеры в статье иллюстрируют подход и не описывают клиентские результаты. Состав внедрения зависит от конкретной задачи и возможностей выбранных сервисов.</p><a class="text-link" href="{link(p,"services.html")}#{e(a["service"])}">Услуга по этой теме ↗</a></article>'+contact(p,a['service'])
  render(p,a['title'],a['description'],body,active='articles.html',article=True)
 # Contact
-p='contact.html';body=heading('Контакты','Начнём с простого<br>разговора о задаче.','Оставьте заявку в боте или напишите лично в Telegram. Если предпочитаете почту или звонок — контакты ниже.')
-body+='<section class="section split"><div class="contact-list">'
-body+=''.join(social_profile(*profile) for profile in SOCIAL_PROFILES)
+p='contact.html';body=heading('Контакты','Обсудим вашу задачу','Оставьте заявку на сайте или свяжитесь со мной удобным способом.')
+body+='''
+<div class="contact-layout">
+ <section class="request-form" id="request-form" aria-labelledby="request-form-title">
+  <h2 id="request-form-title">Оставить заявку</h2>
+  <div id="request-form-status" class="request-form-status" role="status"></div>
+  <script data-b24-form="inline/25/h8a51a" data-b24-form-telemetry-sign="v1:25:site.bd5cb31496b0978c850786c0526098386316cc31190a6437e3d5b2a90988bd56" data-skip-moving="true">
+  (function (w, d, u) {
+    var s = d.createElement('script');
+    s.async = true;
+    s.src = u + '?' + (Date.now() / 180000 | 0);
+    s.addEventListener('error', function () {
+      d.getElementById('request-form-status').textContent = 'Форма не загрузилась. Вы можете связаться со мной через Telegram или почту.';
+    });
+    var h = d.getElementsByTagName('script')[0];
+    h.parentNode.insertBefore(s, h);
+  })(window, document, 'https://cdn-ru.bitrix24.ru/b38606320/crm/form/loader_25.js');
+  </script>
+  <noscript><p>Для загрузки формы нужен JavaScript. Вы можете связаться со мной через Telegram или почту.</p></noscript>
+ </section>
+ <section aria-labelledby="contact-methods-title">
+  <h2 id="contact-methods-title">Другие способы связи</h2>
+  <div class="contact-list">
+'''
+body+=''.join(social_profile(*profile,detailed=True) for profile in SOCIAL_PROFILES)
 for label,value,url in [
  ('Оставить заявку в боте','@'+bot_address.path.lstrip('/'),bot_link()),
  ('Электронная почта',site['email'],'mailto:'+site['email']),
  ('Телефон',site['phone_display'],'tel:'+site['phone']),
 ]:
- external=' target="_blank" rel="noopener noreferrer"' if url.startswith('https') else ''
- body+=f'<a class="contact-item" href="{e(url,quote=True)}"{external}><span><small>{e(label)}</small>{e(value)}</span><span aria-hidden="true">↗</span></a>'
-body+='''</div><div><h2>Что написать<br>в первом сообщении</h2><ol><li>Чем занимаетесь и кому помогаете.</li><li>Какую задачу хотите решить.</li><li>Что уже есть: сайт, площадки, инструменты.</li><li>Какие ограничения по объёму и бюджету важно учесть.</li></ol><p class="note">Не отправляйте пароли, ключи доступа и личные данные клиентов. При необходимости отдельно согласуем безопасный способ доступа.</p></div></section>'''
+ body+=f'<a class="contact-item" href="{e(url,quote=True)}"><span><small>{e(label)}</small>{e(value)}</span><span aria-hidden="true">↗</span></a>'
+body+='''</div></section></div>'''
+payment_methods=(
+ ('USDT','TRON (TRC-20)',site['usdt_tron_address'],'assets/usdt-tron-qr.svg','Tronscan','https://tronscan.org/address/{}/transactions'),
+ ('Bitcoin','Сеть Bitcoin (BTC)',site['bitcoin_address'],'assets/bitcoin-qr.svg','Blockchair','https://blockchair.com/bitcoin/address/{}'),
+)
+body+='<section class="payment-section" id="payment" aria-labelledby="payment-title"><h2 id="payment-title">Оплата в криптовалюте</h2>'
+for currency,network,address,qr,explorer,explorer_url in payment_methods:
+ body+=f'''
+ <div class="payment-method">
+  <div class="payment-details">
+   <h3>{currency}</h3>
+   <p>{network}</p>
+   <div class="wallet-address">
+    <code>{e(address)}</code>
+    <button class="wallet-copy" type="button" aria-label="Скопировать адрес {currency}" hidden>Скопировать адрес</button>
+   </div>
+   <a class="text-link action-link" href="{e(explorer_url.format(address),quote=True)}">Проверить адрес в {explorer} ↗</a>
+   <p class="wallet-status" role="status"></p>
+  </div>
+  <img class="wallet-qr" src="{link(p,qr)}" width="152" height="152" alt="QR-код адреса {currency}" loading="lazy">
+ </div>
+'''
+body+='</section>'
 render(p,'Контакты','Обсудить сайт, автоматизацию или контент с Трофимом Мокровым: Telegram @TrofimMokrov, trofimmokrov@gmail.com, +7 (915) 998-25-54.',body)
 # Owner-approved updates from the private Telegram publishing queue.
 p='updates.html'

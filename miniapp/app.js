@@ -6,10 +6,12 @@
   const note = $('context-note'), status = $('form-status'), form = $('request-form');
   const fields = {service: $('service'), details: $('details'), contact: $('contact'), format: $('request-format')};
   function setStatus(text, error = false) {status.textContent = text; status.classList.toggle('error', error);}
-  function canSend() {return state.telegram && state.telegram.platform && state.telegram.platform !== 'unknown';}
+  function inTelegram() {return state.telegram && state.telegram.platform && state.telegram.platform !== 'unknown';}
+  function canSend() {return inTelegram() && typeof state.telegram.sendData === 'function';}
   function updateContext() {
     if (!state.catalog) return;
-    note.textContent = canSend() ? 'Выберите услугу и оставьте заявку. Ответ придёт по вашему контакту.' : 'Это просмотр приложения. Для отправки откройте @TrofimAI_bot и нажмите «Открыть приложение» в меню бота.';
+    note.hidden = Boolean(canSend());
+    if (!note.hidden) note.textContent = 'Это просмотр приложения. Для отправки откройте @TrofimAI_bot и нажмите «Открыть приложение» в меню бота.';
     $('send-button').disabled = !canSend() || state.sending;
   }
   function syncBackButton() {
@@ -26,14 +28,27 @@
     syncBackButton(); window.scrollTo(0, 0);
     if (focus) $(view === 'services' ? 'catalog-title' : view + '-title').focus({preventScroll: true});
   }
-  function edit() {state.review = null; $('review').hidden = true; form.hidden = false; setStatus(''); fields.details.focus();}
+  function resetReview() {
+    state.review = null;
+    $('review').hidden = true;
+    form.hidden = false;
+    setStatus('');
+  }
+  function edit() {resetReview(); fields.details.focus();}
   function updateFormat() {
     const pilot = fields.format.value === 'pilot';
     $('pilot-form-note').hidden = !pilot; $('portfolio-interest-option').hidden = !pilot;
     if (!pilot) $('portfolio-interest').checked = false;
     if (pilot && state.catalog && state.catalog.pilot) $('pilot-form-note').textContent = state.catalog.pilot.terms + ' ' + state.catalog.pilot.continuation;
   }
-  function choose(id = 'other', requestFormat = null) {if (!state.catalog) return; fields.service.value = id; if (requestFormat) fields.format.value = requestFormat; updateFormat(); edit(); showView('request');}
+  function choose(id = 'other', requestFormat = null) {
+    if (!state.catalog) return;
+    fields.service.value = id;
+    if (requestFormat) fields.format.value = requestFormat;
+    updateFormat();
+    resetReview();
+    showView('request');
+  }
   function link(element, url) {if (/^https:\/\//.test(url) || /^mailto:/.test(url)) element.href = url;}
   function render(catalog) {
     if (!catalog || !Array.isArray(catalog.services) || !catalog.site) throw new Error('catalog');
@@ -45,9 +60,8 @@
       for (const example of pilot.examples) {const li = document.createElement('li'); li.textContent = example; $('pilot-examples').append(li);}
       $('pilot-offer').hidden = false; $('choose-pilot').disabled = false; $('pilot-format-option').disabled = false;
     }
-    for (const [index, service] of catalog.services.entries()) {
+    for (const service of catalog.services) {
       const card = document.createElement('article'); card.className = 'service-card';
-      const number = document.createElement('span'); number.className = 'card-number'; number.textContent = String(index + 1).padStart(2, '0') + ' / НАПРАВЛЕНИЕ';
       const title = document.createElement('h3'); title.textContent = service.name;
       const audience = document.createElement('p'); audience.className = 'audience'; audience.textContent = service.audience;
       const price = document.createElement('p'); price.className = 'price'; price.textContent = service.price;
@@ -57,7 +71,7 @@
       for (const item of service.includes || []) {const li = document.createElement('li'); li.textContent = item; list.append(li);} details.append(list);
       for (const text of [service.result, service.extra, service.separate]) {if (text) {const p = document.createElement('p'); p.textContent = text; details.append(p);}}
       const button = document.createElement('button'); button.className = 'button full'; button.type = 'button'; button.textContent = 'Обсудить задачу →'; button.addEventListener('click', () => choose(service.id));
-      card.append(number, title, audience, price, details, button); $('catalog').append(card);
+      card.append(title, audience, price, details, button); $('catalog').append(card);
       const option = document.createElement('option'); option.value = service.id; option.textContent = service.name; fields.service.append(option);
     }
     const other = document.createElement('option'); other.value = 'other'; other.textContent = 'Другая задача'; fields.service.append(other);
@@ -79,6 +93,18 @@
     updateContext();
   }
   document.querySelectorAll('[data-view]').forEach(button => button.addEventListener('click', () => showView(button.dataset.view)));
+  for (const id of ['personal-link', 'open-bot']) {
+    $(id).addEventListener('click', event => {
+      const url = event.currentTarget.href;
+      if (!inTelegram() || typeof state.telegram.openTelegramLink !== 'function' ||
+          !url.startsWith('https://t.me/') || event.button !== 0 ||
+          event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+      try {
+        state.telegram.openTelegramLink(url);
+        event.preventDefault();
+      } catch (_) { /* Use the anchor when the Telegram client rejects the native navigation. */ }
+    });
+  }
   document.querySelector('.brand').addEventListener('click', event => {event.preventDefault(); showView('services');}); $('catalog-title').tabIndex = -1;
   $('choose-other').addEventListener('click', () => choose()); $('contact-request').addEventListener('click', () => choose()); $('edit-button').addEventListener('click', edit);
   $('choose-pilot').addEventListener('click', () => choose('other', 'pilot')); fields.format.addEventListener('change', updateFormat);
@@ -96,7 +122,11 @@
     $('review-portfolio').textContent = data.portfolio_interest ? 'Готов(а) обсудить кейс. Разрешение на публикацию ещё не дано.' : 'Без запроса на обсуждение кейса.';
     if (pilot) $('review-pilot-note').textContent = state.catalog.pilot.terms + ' ' + state.catalog.pilot.continuation;
     $('review-details').textContent = details; $('review-contact').textContent = contact;
-    form.hidden = true; $('review').hidden = false; setStatus(canSend() ? '' : 'Отправка доступна при открытии приложения кнопкой в боте.'); updateContext(); $('review').scrollIntoView({block: 'start'});
+    form.hidden = true; $('review').hidden = false;
+    setStatus(canSend() ? '' : 'Отправка доступна при открытии приложения кнопкой в боте.');
+    updateContext();
+    $('review-title').focus({preventScroll: true});
+    $('review').scrollIntoView({block: 'start'});
   });
   $('send-button').addEventListener('click', () => {
     if (!state.review || state.sending || !canSend()) return;
@@ -106,6 +136,6 @@
   });
   $('telegram-sdk').addEventListener('load', connectTelegram); connectTelegram();
   fetch('catalog.json', {cache: 'no-cache'}).then(response => {if (!response.ok) throw new Error('catalog'); return response.json();}).then(render).catch(() => {
-    note.textContent = 'Не удалось загрузить услуги. Обновите приложение или напишите @TrofimMokrov.'; setStatus('Каталог недоступен. Можно связаться с Трофимом через раздел «Контакты».', true);
+    note.hidden = false; note.textContent = 'Не удалось загрузить услуги. Обновите приложение или напишите @TrofimMokrov.'; setStatus('Каталог недоступен. Можно связаться с Трофимом через раздел «Контакты».', true);
   });
 })();
