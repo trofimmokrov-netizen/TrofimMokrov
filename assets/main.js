@@ -99,10 +99,54 @@
     }
   }
 
+  const librarySearch = document.querySelector('#library-search');
+  if (librarySearch) {
+    const status = document.querySelector('#library-search-status');
+    const index = document.querySelector('.library-index');
+    const empty = document.querySelector('.library-empty');
+    const normalize = value => value.toLocaleLowerCase('ru').replaceAll('ё', 'е');
+    const searchWord = word => {
+      if (!/^[а-я]+$/u.test(word)) return word;
+      const stem = word.replace(/(?:ами|ями|ах|ях|ов|ев|ам|ям|ой|ей|ом|ем|[аяуюеыи])$/u, '');
+      return stem.length >= 4 ? stem : word;
+    };
+    const topics = [...document.querySelectorAll('.library-topic')].map(section => {
+      const title = section.querySelector('h2').textContent + ' ' + section.dataset.libraryKeywords;
+      const entries = [...section.querySelectorAll('[data-library-result]')].map(element => ({
+        element,
+        text: normalize(title + ' ' + element.querySelector('h3').textContent + ' ' + element.querySelector('p').textContent),
+      }));
+      return {section, entries};
+    });
+    const filterLibrary = () => {
+      const query = normalize(librarySearch.value.trim());
+      const words = query ? query.split(/\s+/).map(searchWord) : [];
+      let count = 0;
+      for (const {section, entries} of topics) {
+        let matches = 0;
+        for (const {element, text} of entries) {
+          const found = words.every(word => text.includes(word));
+          element.hidden = !found;
+          matches += Number(found);
+        }
+        section.hidden = matches === 0;
+        count += matches;
+      }
+      index.hidden = words.length > 0;
+      empty.hidden = count > 0;
+      status.textContent = words.length ? 'Найдено материалов: ' + count : '';
+    };
+    librarySearch.closest('.library-search').hidden = false;
+    librarySearch.addEventListener('input', filterLibrary);
+    window.addEventListener('pageshow', filterLibrary);
+    filterLibrary();
+  }
+
   if (!('IntersectionObserver' in window) || !Element.prototype.animate) return;
   const introSelector = '.hero-copy, .page-heading';
   const sectionSelector = '[data-reveal], .section-head:not([data-reveal] *)';
-  const regionSelector = `${introSelector}, ${sectionSelector}, .hero-portrait, .home-service`;
+  const regionSelector = `${introSelector}, ${sectionSelector}, .hero-portrait, .home-service, .project-feature-media`;
+  const revealedElements = new WeakSet();
   const activeReveals = new Map();
   const easeOut = 'cubic-bezier(.18,.8,.24,1)';
   const rise = (distance, opacity) => [
@@ -115,7 +159,8 @@
   ];
 
   function animateEntrance(element, region, frames, {duration, delay = 0}) {
-    if (!element) return;
+    if (!element || revealedElements.has(element)) return;
+    revealedElements.add(element);
     const animation = element.animate(frames, {duration, delay, easing: easeOut, fill: 'backwards'});
     activeReveals.set(animation, region);
     const forget = () => activeReveals.delete(animation);
@@ -123,9 +168,28 @@
     animation.addEventListener('cancel', forget, {once: true});
   }
 
-  function reveal(region) {
-    if (document.hidden || reducedMotion.matches || region.matches(':focus-within') ||
-        region.closest(':target') || region.querySelector(':target')) return;
+  function motionSuppressed(region) {
+    return document.hidden || reducedMotion.matches || region.matches(':focus-within') ||
+      region.closest(':target') !== null || region.querySelector(':target') !== null;
+  }
+
+  function revealProjectMedia(frame) {
+    const image = frame.querySelector(':scope > img');
+    if (!image) return;
+    if (!image.complete) {
+      image.addEventListener('load', () => observer.observe(frame), {once: true});
+      return;
+    }
+
+    const card = frame.closest('.project-feature') || frame;
+    if (!image.naturalWidth || motionSuppressed(card)) return;
+    animateEntrance(image, card, [
+      {opacity: .72, scale: '1.05', clipPath: 'inset(7% 4% 12% 4%)'},
+      {opacity: 1, scale: '1', clipPath: 'inset(0)'},
+    ], {duration: 620});
+  }
+
+  function reveal(region, tileDelay) {
     if (region.matches(introSelector)) {
       animateEntrance(region.querySelector(':scope > .eyebrow'), region, rise(6, .69), {duration: 360});
       animateEntrance(region.querySelector(':scope > h1'), region, headline, {duration: 610, delay: 35});
@@ -141,12 +205,16 @@
       return;
     }
     if (region.matches('.home-service')) {
-      animateEntrance(region.querySelector('h3, strong'), region, rise(5, .76), {duration: 360});
-      animateEntrance(region.querySelector('.home-service-summary'), region, rise(4, .8), {duration: 380, delay: 45});
+      animateEntrance(region.querySelector('h3, strong'), region, rise(5, .76), {duration: 360, delay: tileDelay});
+      animateEntrance(region.querySelector('.home-service-summary'), region, rise(4, .8), {duration: 380, delay: tileDelay + 45});
+      return;
+    }
+    if (region.matches('.project-feature-media')) {
+      revealProjectMedia(region);
       return;
     }
 
-    const heading = region.querySelector('h2, h3');
+    const heading = [...region.querySelectorAll('h2, h3')].find(candidate => candidate.closest(regionSelector) === region);
     if (!heading) return;
     animateEntrance(heading, region, rise(10, .62), {duration: 470});
     const description = heading.nextElementSibling;
@@ -156,11 +224,18 @@
   }
 
   const observer = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-      if (!entry.isIntersecting) return;
-      observer.unobserve(entry.target);
-      reveal(entry.target);
-    });
+    let tiles = 0;
+    for (const {isIntersecting, target} of entries) {
+      if (!isIntersecting) continue;
+      observer.unobserve(target);
+      if (motionSuppressed(target)) continue;
+      let tileDelay = 0;
+      if (target.matches('.home-service')) {
+        tileDelay = Math.min(tiles, 2) * 45;
+        tiles += 1;
+      }
+      reveal(target, tileDelay);
+    }
   }, {threshold: .08});
 
   document.querySelectorAll(regionSelector).forEach(element => observer.observe(element));

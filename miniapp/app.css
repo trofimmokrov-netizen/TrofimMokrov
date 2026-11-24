@@ -16,6 +16,16 @@
   font-size: clamp(28px, 7vw, 42px);
   margin: 0 0 8px;
 }
+#request-view .request-advance {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-left: 3px solid #91a578;
+  border-radius: 0 8px 8px 0;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+}
 @font-face {
   font-family: Nunito;
   src: url("../assets/fonts/nunito-semibold.woff2") format("woff2");

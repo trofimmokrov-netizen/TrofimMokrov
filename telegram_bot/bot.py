@@ -279,15 +279,23 @@ class Bot:
             self.store.clear_session(chat)
             self.reply(chat, "Приём заявок через бота ещё настраивается. Пока напишите Трофиму: " + self.site["telegram"])
             return
+        terms = self.site.get("advance_terms", "")
+        terms_note = "\n\n" + terms if terms else ""
         data = {"source": source, "request_format": request_format, "portfolio_interest": False}
         if service_id in self.by_id:
             data["service_id"] = service_id
             self.store.save_session(chat, "details", data, int(self.clock()))
-            self.reply(chat, "Услуга: " + self.by_id[service_id]["name"] + ".\nОпишите задачу и желаемый результат (10–1500 символов). Можете указать желаемый бюджет.", CANCEL)
+            self.reply(chat, "Услуга: " + self.by_id[service_id]["name"] + ".\nОпишите задачу и желаемый результат (10–1500 символов). Можете указать желаемый бюджет." + terms_note, CANCEL)
         else:
             self.store.save_session(chat, "service", data, int(self.clock()))
             keyboard = {"keyboard": [[s["name"]] for s in self.services] + [["Другое", "Отмена"]], "resize_keyboard": True}
-            self.reply(chat, "Какую задачу вы хотите обсудить? Выберите услугу.", keyboard)
+            self.reply(chat, "Какую задачу вы хотите обсудить? Выберите услугу." + terms_note, keyboard)
+
+    @staticmethod
+    def service_price_text(service):
+        name_and_price = service["name"] + " — " + service["price"]
+        unit = service.get("unit")
+        return name_and_price + (" (" + unit + ")" if unit else "")
 
     def _pilot_info(self, chat):
         self.reply(chat, self.pilot["headline"] + "\n\n" + self.pilot["intro"] + "\n\n" + self.pilot["terms"] + "\n\n" + self.pilot["continuation"] + "\n\n" + self.pilot["portfolio"] + "\n\nНажмите «Пробная задача», чтобы обсудить свой вариант.")
@@ -387,7 +395,8 @@ class Bot:
         if text in ("Услуги и цены", "Портфолио", "Контакты", "Сайт") or command == "/services":
             self.store.clear_session(chat)
             if text == "Услуги и цены" or command == "/services":
-                self.reply(chat, "Услуги Трофима:\n\n" + "\n".join(s["name"] + " — " + s["price"] for s in self.services) + "\n\n" + self.website + "/services.html\nДля обсуждения нажмите «Оставить заявку».")
+                advance_terms = self.site.get("advance_terms", "")
+                self.reply(chat, "Услуги Трофима:\n\n" + "\n".join(map(self.service_price_text, self.services)) + "\n\n" + (advance_terms + "\n\n" if advance_terms else "") + self.website + "/services.html\nДля обсуждения нажмите «Оставить заявку».")
             elif text == "Портфолио":
                 self.reply(chat, "Работы и описание моего вклада: " + self.website + "/portfolio.html")
             elif text == "Контакты":
@@ -486,6 +495,9 @@ class Bot:
     def _assist(self, chat, text):
         """Answer from published site facts; never invent model-generated facts."""
         query = text.casefold().replace("ё", "е")
+        if self.site.get("advance_terms") and any(word in query for word in ("аванс", "предоплат", "задат")):
+            self.reply(chat, self.site["advance_terms"])
+            return
         if any(word in query for word in ("пробн", "тестов", "попробовать", "для портфолио")):
             self._pilot_info(chat)
             return
@@ -520,10 +532,10 @@ class Bot:
             if service_id in self.by_id and any(word in query for word in words):
                 service = self.by_id[service_id]
                 summary = "\n".join("• " + item for item in service.get("includes", [])[:3])
-                self.reply(chat, service["name"] + " — " + service["price"] + ("\n\n" + summary if summary else "") + "\n\nЭто ориентир для базового объёма. Точные условия согласуем после обсуждения задачи. Для продолжения нажмите «Оставить заявку» или «Открыть приложение».\n" + self.website + "/services.html#" + service_id)
+                self.reply(chat, self.service_price_text(service) + ("\n\n" + summary if summary else "") + "\n\nЭто ориентир для базового объёма. Точные условия согласуем после обсуждения задачи. Для продолжения нажмите «Оставить заявку» или «Открыть приложение».\n" + self.website + "/services.html#" + service_id)
                 return
         if any(word in query for word in ("цен", "стоимост", "услуг")):
-            self.reply(chat, "Направления и ориентиры:\n\n" + "\n".join(service["name"] + " — " + service["price"] for service in self.services) + "\n\nОпишите задачу — помогу выбрать направление.")
+            self.reply(chat, "Направления и ориентиры:\n\n" + "\n".join(map(self.service_price_text, self.services)) + "\n\nОпишите задачу — помогу выбрать направление.")
             return
         if any(word in query for word in ("контакт", "связаться", "написать трофиму")):
             self.reply(chat, "Написать Трофиму: " + self.site["telegram"] + "\nПочта: " + self.site["email"])

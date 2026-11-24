@@ -2,6 +2,7 @@
 """Check the deployed Pages site with read-only HTTP requests."""
 
 import json
+import os
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -13,11 +14,12 @@ from urllib.request import Request, urlopen
 ROOT = Path(__file__).resolve().parents[1]
 CHECKS = {
     '/': ('id="main"', 'contact.html#request-form', 'start=app'),
-    '/contact.html': ('id="request-form"', 'data-b24-form=', 'id="telegram"'),
-    '/services.html': ('id="business-system"', 'id="social-actions"'),
+    '/contact.html': ('id="request-form"', 'data-b24-form=', 'id="telegram"', 'аванса 5 000 ₽'),
+    '/services.html': ('id="business-system"', 'id="social-actions"', 'id="work-terms"'),
     '/portfolio.html': ('id="telegram-projects"',),
+    '/articles.html': ('id="library-search"', 'id="topic-telegram"', 'id="topic-crm"'),
     '/updates.html': ('class="updates-feed"',),
-    '/miniapp/': ('id="services-view"', 'id="request-view"', 'app.js?'),
+    '/miniapp/': ('id="services-view"', 'id="request-view"', 'app.js?', 'аванса 5 000 ₽'),
     '/miniapp/app.js': ('loader_25.js', 'site_button/loader_3_gbqxj4.js'),
     '/miniapp/catalog.json': (),
 }
@@ -61,12 +63,21 @@ def main():
     base = site['base_url'].rstrip('/') + '/'
     if urlsplit(base).scheme != 'https' or not urlsplit(base).hostname:
         raise SystemExit('No canonical HTTPS site configured for the public checks.')
+    # Pages and the health workflow can start concurrently on a push to main.
+    deadline = time.monotonic() + (90 if os.environ.get('GITHUB_EVENT_NAME') == 'push' else 0)
+    pending = CHECKS
+    results = {}
     with ThreadPoolExecutor(max_workers=4) as executor:
-        checks = [executor.submit(check, base, path, markers) for path, markers in CHECKS.items()]
-        results = [check_result.result() for check_result in checks]
-    for message, _ in results:
+        while pending:
+            checks = {path: executor.submit(check, base, path, markers) for path, markers in pending.items()}
+            results.update((path, result.result()) for path, result in checks.items())
+            pending = {path: CHECKS[path] for path in pending if not results[path][1]}
+            if not pending or time.monotonic() >= deadline:
+                break
+            time.sleep(min(8, max(0, deadline - time.monotonic())))
+    for message, _ in results.values():
         print(message)
-    return 0 if all(success for _, success in results) else 1
+    return 0 if all(success for _, success in results.values()) else 1
 
 
 if __name__ == '__main__':

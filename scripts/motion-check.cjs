@@ -60,6 +60,21 @@ const pages = [
     await page.waitForFunction(() => window.entrances.some(({element}) => element.matches('.home-service .home-service-summary')));
     assert.equal(await service.evaluate(card => card.getAnimations().length), 0, 'Service links should stay in place');
 
+    const projectFrame = page.locator('.project-feature-media').first();
+    await projectFrame.scrollIntoViewIfNeeded();
+    const projectImage = projectFrame.locator('img');
+    await projectImage.evaluate(image => image.decode());
+    const imageElement = await projectImage.elementHandle();
+    await page.waitForFunction(image => window.entrances.some(({element}) => element === image), imageElement);
+    assert(await projectImage.evaluate(image => {
+      const reveal = window.entrances.find(({element}) => element === image);
+      return reveal.keyframes[0].scale > 1 && reveal.keyframes[0].clipPath !== reveal.keyframes[1].clipPath;
+    }), 'Project media should reveal inside its frame');
+    assert.equal(await projectFrame.evaluate(frame => {
+      const card = frame.closest('.project-feature');
+      return window.entrances.filter(({element}) => element === frame || element === card).length;
+    }), 0, 'Project frame and link should stay in place');
+
     const section = page.locator('[data-reveal]').last();
     const sectionHeading = section.locator('h2, h3').first();
     assert.equal(await sectionHeading.evaluate(heading => window.entrances.some(({element}) => element === heading)), false);
@@ -68,6 +83,16 @@ const pages = [
     await page.evaluate(() => window.scrollTo({top: 0, behavior: 'instant'}));
     await section.scrollIntoViewIfNeeded();
     assert.equal(await sectionHeading.evaluate(heading => window.entrances.filter(({element}) => element === heading).length), 1);
+    assert.equal(await projectImage.evaluate(image => window.entrances.filter(({element}) => element === image).length), 1);
+
+    await page.setViewportSize({width: 1440, height: 700});
+    await page.goto(base);
+    await page.locator('.home-service').first().scrollIntoViewIfNeeded();
+    await page.waitForFunction(() => window.entrances.filter(({element}) => element.matches('.home-service h3')).length >= 2);
+    const titleDelays = await page.evaluate(() => window.entrances
+      .filter(({element}) => element.matches('.home-service h3'))
+      .map(({options}) => options.delay));
+    assert(titleDelays[0] < titleDelays[1] && titleDelays.every(delay => delay <= 90), 'Visible service tiles should stagger briefly');
 
     await page.goto(base + 'contact.html');
     await page.waitForFunction(() => window.entrances.some(({element}) => element.matches('.page-heading > h1')));
@@ -108,7 +133,7 @@ const pages = [
     assert(await plain.getByRole('navigation', {name: 'Основная навигация'}).isVisible());
     assert(await plain.locator('[data-reveal]').last().isVisible());
     assert.deepEqual(errors, []);
-    console.log('PASS: 28 responsive page checks, masked heading, portrait and service text reveals, mobile menu, reduced motion and no-JS fallback.');
+    console.log('PASS: 28 responsive page checks, masked heading, portrait and project media reveals, staggered service text, mobile menu, reduced motion and no-JS fallback.');
   } finally {
     await browser.close();
   }

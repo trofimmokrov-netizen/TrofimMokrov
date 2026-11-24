@@ -14,6 +14,24 @@ site=read('content/site.json'); services=read('content/services.json'); projects
 telegram_projects=read('content/telegram-projects.json')
 pilot=read('content/pilot.json')
 articles=[json.loads(p.read_text()) for p in sorted((ROOT/'content/articles').glob('*.json'))]
+topics={
+ 'websites':'Сайты и интерфейсы',
+ 'telegram':'Telegram и мини-приложения',
+ 'crm':'Битрикс24 и заявки',
+ 'content':'AI и контент',
+ 'automation':'Автоматизация и надёжность',
+ 'practice':'Цифровая практика',
+}
+original_categories={
+ 'Сайты':'websites', 'AI-контент':'content', 'Соцсети':'content',
+ 'Автоматизация':'automation', 'Стоимость':'automation', 'Инфраструктура':'practice',
+}
+topic_by_category={**original_categories,**{name:key for key,name in topics.items()}}
+by_topic={key:[] for key in topics}
+for article in articles:
+ by_topic[topic_by_category[article['category']]].append(article)
+for group in by_topic.values():
+ group.sort(key=lambda article:article['title'].casefold().replace('ё','е'))
 base=site.get('base_url','').rstrip('/')
 if base and (urlsplit(base).scheme!='https' or not urlsplit(base).netloc or urlsplit(base).query or urlsplit(base).fragment): raise ValueError('base_url must be an absolute HTTPS URL without query or fragment')
 bot_url=site['bot_url'].rstrip('/')
@@ -76,18 +94,22 @@ def telegram_action(service_id=None,secondary=False):
  style=' secondary' if secondary else ''
  return f'<a class="button telegram-action{style}" href="{bot_link(service_id)}">{TELEGRAM_ICON}Обсудить в Telegram</a>'
 def form_action(current):
- return f'<a class="button form-action" href="{link(current,"contact.html")}#request-form">Заполнить форму ↗</a>'
+ return f'<a class="button form-action" href="{link(current,"contact.html")}#request-form">Оставить заявку ↗</a>'
 def eyebrow(text):return f'<div class="eyebrow">{e(text)}</div>'
-def contact(current,service_id=None):return f'''<section class="contact-banner" data-reveal><h2>Обсудим вашу задачу</h2><p>Расскажите, какой результат нужен. Я помогу определить объём работ, стоимость и сроки.</p><div class="actions">{form_action(current)}{telegram_action(service_id,secondary=True)}</div></section>'''
-def steps():return '''<div><article class="step"><span>01</span><div><h3>Разбираемся в задаче</h3><p>Что сейчас не работает, кто пользуется инструментами и какой результат нужен.</p></div></article><article class="step"><span>02</span><div><h3>Согласуем состав и стоимость</h3><p>Фиксируем объём, сроки, порядок правок и условия дальнейшей поддержки.</p></div></article><article class="step"><span>03</span><div><h3>Создаём и проверяем</h3><p>Проверяем результат на согласованных примерах и разбираемся, как им пользоваться.</p></div></article></div>'''
+def contact(current,service_id=None):return f'''<section class="contact-banner" data-reveal><div class="contact-banner-copy"><h2>Обсудим вашу задачу</h2><p>Расскажите, какой результат нужен. Я помогу определить объём работ, стоимость и сроки.</p></div><div class="actions">{form_action(current)}{telegram_action(service_id,secondary=True)}</div></section>'''
+def bot_project_anchor(project):return 'bot-'+project['handle'].lower()
+def steps():return f'''<div><article class="step"><span>01</span><div><h3>Разбираемся в задаче</h3><p>Что сейчас не работает, кто пользуется инструментами и какой результат нужен.</p></div></article><article class="step"><span>02</span><div><h3>Согласуем состав и стоимость</h3><p>Фиксируем объём, сроки, порядок правок и условия дальнейшей поддержки. {e(site['advance_terms'])}</p></div></article><article class="step"><span>03</span><div><h3>Создаём и проверяем</h3><p>Проверяем результат на согласованных примерах и разбираемся, как им пользоваться.</p></div></article></div>'''
 def pilot_section(current):
  examples=''.join(f'<li>{e(item)}</li>' for item in pilot['examples'])
  return f'''<section class="section" id="pilot"><div class="section-head">{eyebrow(pilot['name'])}<h2>{e(pilot['headline'])}</h2><p>{e(pilot['intro'])}</p></div><div class="grid"><article class="card"><h3>1. Выбираем небольшой результат</h3><p>Что можно обсудить:</p><ul>{examples}</ul></article><article class="card"><h3>2. Согласуем условия</h3><p>{e(pilot['terms'])}</p><p>{e(pilot['continuation'])}</p></article><article class="card"><h3>3. По желанию — кейс в портфолио</h3><p>{e(pilot['portfolio'])}</p></article></div><div class="actions"><a class="button" href="{e(bot_url,quote=True)}?start=pilot" target="_blank" rel="noopener noreferrer">Обсудить пробную задачу ↗</a><a class="button secondary" href="{e(site['telegram'])}" target="_blank" rel="noopener noreferrer">Задать вопрос лично</a></div></section>'''
-def article_cards(current,limit=None):
- out=''
- for a in articles[:limit]:
-  out+=f'''<article class="card article-card" data-reveal><div class="category">{e(a['category'])}</div><h2>{e(a['title'])}</h2><p>{e(a['description'])}</p><a class="text-link" href="{link(current,'articles/'+a['slug']+'.html')}">Читать статью ↗</a></article>'''
- return '<div class="grid">'+out+'</div>'
+def article_path(article):
+ return f"articles/{article['slug']}.html"
+
+def article_count(total):
+ ending='статей'
+ if total%100 not in range(11,15):
+  ending={1:'статья',2:'статьи',3:'статьи',4:'статьи'}.get(total%10,ending)
+ return f'{total} {ending}'
 def heading(label,title,desc):return f'<section class="page-heading">{eyebrow(label)}<h1>{title}</h1><p class="lead">{e(desc)}</p></section>'
 def render(path,title,description,body,active=None,article=False):
  if path in ('services.html','portfolio.html'):
@@ -125,25 +147,32 @@ def render(path,title,description,body,active=None,article=False):
  target=ROOT/path;target.parent.mkdir(parents=True,exist_ok=True);target.write_text(content+'\n');outputs.append(path)
 faqs=[('Можно сначала посмотреть, каким будет сайт?', 'Да. Сначала показываю предварительный вариант, чтобы вы могли оценить идею и подачу. После обсуждения согласуем дальнейшую доработку, стоимость и условия оплаты. Базовый сайт с помощью AI — от 10 000 ₽.'),('Можно дополнить сайт после запуска?', 'Да. Можно начать с небольшой версии, а затем добавлять услуги, статьи, проекты и страницы. Новые задачи и их стоимость согласуются отдельно.'),('Кто следит за системой после запуска?', 'При подключении проверяю согласованный сценарий и объясняю его работу. Дальнейшее наблюдение и изменения можно поручить мне отдельно: заранее согласуем график проверок, канал связи, сроки реакции и стоимость. Постоянная доступность и устранение любых технических проблем в разовое подключение не входят.'),('AI-агент публикует во всех соцсетях?', 'Подключаем согласованные площадки, где доступны необходимые интеграции. До оплаты проверяем возможности ваших аккаунтов и фиксируем состав. Обещать одинаковую работу во всех соцсетях без такой проверки было бы некорректно.'),('Что входит в подключение AI-агента за 10 000 ₽?', 'Подбор сценария, подключение согласованных аккаунтов, настройка стиля и расписания, тестовая публикация и объяснение работы. Подписки сервисов, нестандартная разработка и дальнейшее ведение оплачиваются отдельно.'),('Можно обратиться с личной задачей, без бизнеса?', 'Да. Можно обсудить настройку компьютера или приложений, личный сайт, AI-инструменты и контент для собственного проекта. Решение и объём подбираются индивидуально.'),('Можно начать с небольшой задачи?','Да. Можно настроить одно устройство, подготовить изображение или автоматизировать один понятный процесс. Состав небольшой задачи согласуем заранее.'),('Что нужно для расчёта стоимости?','Расскажите, чем занимаетесь, какой результат нужен и какими инструментами уже пользуетесь. Примеры и ссылки помогут точнее определить объём. Пароли и персональные данные в первом сообщении не нужны.'),('Что означает цена «от»?','Это стоимость базового объёма, описанного в услуге. Дополнительные страницы, сценарии, площадки и нестандартные интеграции оцениваются отдельно до начала работы.'),('Вы гарантируете рост продаж?','Нет. Я отвечаю за согласованный результат работы: сайт, контент, настройку или сценарий. Продажи зависят также от продукта, аудитории, рекламы и обработки обращений.'),('Что со сроками, правками и поддержкой?','Сроки, количество согласований и условия поддержки определяются для конкретной задачи до начала работы. Бессрочная поддержка и неограниченные правки в тарифы не входят.')]
 bot_service=next(s for s in services if s['id']=='telegram-bots')
-faqs.extend([('Можно заказать бот и мини-приложение как TrofimAI?', 'Да. Базовая настройка под ваш стиль — от 10 000 ₽: меню, услуги, ссылки на сайт, форма заявки и уведомление владельцу. Точный состав согласуем до начала. Можно предложить свой бюджет.'),('Как оплачивается дальнейшая работа бота?',bot_service['separate'])])
+faqs.extend([('Можно заказать бот и мини-приложение как TrofimAI?', 'Да. Базовая настройка под ваш стиль — от 10 000 ₽: меню, услуги, ссылки на сайт, форма заявки и уведомление владельцу. Точный состав согласуем до начала. Можно предложить свой бюджет.'),('Как оплачивается дальнейшая работа бота?',bot_service['separate']),('Когда начинается работа?',site['advance_terms'])])
 
 def faq_section(items):
  entries=''.join(f'<details><summary>{e(question)}</summary><p>{e(answer)}</p></details>' for question,answer in items)
  return f'<section class="section home-faq" data-reveal><div class="section-head"><h2>Частые вопросы</h2></div><div class="faq">{entries}</div></section>'
 # Home
 p='index.html'
-featured_ids=('websites','telegram-bots','business-system','automation','ai-agents','social-actions')
 services_by_id={service['id']:service for service in services}
-featured=''.join(
- f'''<a class="home-service" href="services.html#{service['id']}">
+def home_service(service,featured=False):
+ style=' home-service--featured' if featured else ''
+ return f'''<a class="home-service{style}" href="services.html#{service['id']}">
  <span class="home-service-icon" aria-hidden="true">{e(service['icon'])}</span>
  <h3>{e(service['name'])}</h3>
  <p class="home-service-summary">{e(service['summary'])}</p>
- <span class="home-service-meta"><span class="home-service-price">{e(service['price'])}</span><span class="tile-arrow" aria-hidden="true">↗</span></span></a>'''
- for service in (services_by_id[key] for key in featured_ids)
-)
+ <span class="home-service-meta">
+  <span class="home-service-pricing"><span class="home-service-price">{e(service['price'])}</span><small>{e(service['unit'])}</small></span>
+  <span class="tile-arrow" aria-hidden="true">↗</span>
+ </span>
+</a>'''
+priority_services=''.join(home_service(services_by_id[key]) for key in ('telegram-bots','business-system'))
+other_services=''.join(home_service(services_by_id[key]) for key in ('automation','ai-agents','social-actions'))
 featured_project=next(project for project in projects if project['slug']=='ksusha-epoxy')
-telegram_project_names=''.join(f'<li>{e(project["name"])}</li>' for project in telegram_projects)
+telegram_project_links=''.join(
+ f'<li><a class="project-cluster-link" href="portfolio.html#{e(bot_project_anchor(project),quote=True)}">{e(project["name"])}<span aria-hidden="true">↗</span></a></li>'
+ for project in telegram_projects
+)
 body=f'''
 <section class="hero" aria-labelledby="home-title">
  <div class="hero-copy">
@@ -159,13 +188,17 @@ body=f'''
  <div class="hero-portrait">
   <img src="{link(p,'assets/trofim-mokrov-portrait-800.webp')}"
    srcset="{link(p,'assets/trofim-mokrov-portrait-240.webp')} 240w, {link(p,'assets/trofim-mokrov-portrait-800.webp')} 800w"
-   sizes="(max-width: 600px) 76px, (max-width: 900px) 32vw, 380px"
+   sizes="(max-width: 600px) 88px, (max-width: 1200px) 39vw, 525px"
    width="800" height="1200" alt="{e(site['name'])}" decoding="async" fetchpriority="high">
  </div>
 </section>
 <section class="section home-services" aria-labelledby="home-services-title" data-reveal>
  <div class="section-head"><h2 id="home-services-title">Чем могу помочь</h2><a class="text-link action-link" href="services.html">Все услуги ↗</a></div>
- <div class="home-service-list">{featured}</div>
+ <div class="home-service-priority">
+  {home_service(services_by_id['websites'],featured=True)}
+  <div class="home-service-pair">{priority_services}</div>
+ </div>
+ <div class="home-service-list">{other_services}</div>
 </section>
 <section class="section home-projects" aria-labelledby="home-projects-title" data-reveal>
  <div class="section-head"><h2 id="home-projects-title">Избранные проекты</h2><a class="text-link action-link" href="portfolio.html">Все проекты ↗</a></div>
@@ -179,13 +212,19 @@ body=f'''
   <article class="project-cluster">
    <span class="project-cluster-icon">{TELEGRAM_ICON}</span>
    <h3>Боты и мини-приложения</h3>
-   <ul>{telegram_project_names}</ul>
-   <a class="text-link action-link" href="portfolio.html#telegram-projects">Проекты в Telegram ↗</a>
+   <ul>{telegram_project_links}</ul>
   </article>
  </div>
 </section>
+<section class="home-library" aria-labelledby="home-library-title" data-reveal>
+ <div>
+  <h2 id="home-library-title">Практическая библиотека</h2>
+  <p>{article_count(len(articles))} о сайтах, Telegram, Битрикс24, AI и автоматизации.</p>
+ </div>
+ <a class="button secondary" href="articles.html">В библиотеку ↗</a>
+</section>
 '''
-body+=faq_section(faqs[:2]+faqs[-2:-1])+contact(p)
+body+=faq_section(faqs[:2]+[faqs[-3],faqs[-1]])+contact(p)
 render(p,'Сайты, Telegram и автоматизация','Трофим Мокров: создание сайтов и Telegram-ботов, настройка Битрикс24 и AI-инструментов для бизнеса.',body)
 # About
 p='about.html'
@@ -194,7 +233,8 @@ body+=f'''<section class="section split"><div class="bio"><p>Этот сайт �
 body=body.replace(contact(p),'''<section class="section"><div class="section-head"><h2>Кому могу быть полезен</h2><p>Не обязательно разбираться в AI или приходить с готовым техническим заданием.</p></div><div class="grid"><article class="card"><h3>Компаниям из разных сфер</h3><p>Помогу организовать контент, представить услуги в интернете и подобрать автоматизацию под процессы вашей команды.</p></article><article class="card"><h3>Экспертам и самостоятельным специалистам</h3><p>Личный сайт, индивидуальный стиль, регулярные публикации и инструменты, которые освобождают время для основной работы.</p></article><article class="card"><h3>Частным клиентам</h3><p>Настройка компьютера и приложений, знакомство с AI-инструментами и помощь с личным цифровым проектом.</p></article></div></section>'''+contact(p))
 render(p,'Обо мне','Трофим Мокров: подход к созданию сайтов, автоматизации и контенту. Сначала задача бизнеса, затем инструменты и проверяемый результат.',body)
 # Services
-p='services.html';body=heading('Услуги и цены','Понятный объём.<br>Понятная стоимость.','Для бизнеса и личных задач: от подключения AI-агента за 10 000 ₽ до сайта, настройки компьютера или индивидуальной автоматизации. Ниже — состав услуг и отдельные расходы.')
+p='services.html';body=heading('Услуги и цены','Понятный объём.<br>Понятная стоимость.','Сайты, Telegram, автоматизация и настройка цифровых инструментов для бизнеса и личных задач.')
+body+=f'<p class="advance-note" id="work-terms">{e(site["advance_terms"])} Небольшие задачи можно объединить в заказ на сумму от 5 000 ₽.</p>'
 body+='<nav class="service-index" aria-label="Список услуг">'+''.join(f'<a href="#{s["id"]}">{e(s["name"])}</a>' for s in services)+'</nav>'
 for s in services:
  inc=''.join(f'<li>{e(item)}</li>' for item in s['includes'])
@@ -210,7 +250,7 @@ for project in telegram_projects:
  website=''
  if project.get('website'):
   website=f'<a class="text-link action-link bot-project-site" href="{e(project["website"],quote=True)}" target="_blank" rel="noopener noreferrer">{e(project["website_label"])} ↗</a>'
- body+=f'''<article class="bot-project" data-reveal>
+ body+=f'''<article class="bot-project" id="{e(bot_project_anchor(project),quote=True)}" data-reveal>
  <h3>{e(project['name'])}</h3>
  <p>{e(project['description'])}</p>{website}
  <a class="bot-project-link" href="{e(bot_profile,quote=True)}" target="_blank" rel="noopener noreferrer">
@@ -233,22 +273,70 @@ for item in projects:
  body+='</div></section>'
 body+=contact(p);render(p,'Портфолио','Проекты Трофима Мокрова: сайт Ксении ZEMLYANOVVA EPOXY, цифровое оформление «Древесного замысла» и собственный сайт с помощью AI.',body)
 # Articles
-p='articles.html';body=heading('Статьи','Сначала разобраться.<br>Потом внедрять.','Практические материалы о сайтах, автоматизации и контенте. Без обещаний волшебных инструментов и гарантированных продаж.')+article_cards(p)+contact(p)
-render(p,'Статьи о сайтах, AI и автоматизации','Шесть практических руководств: выбор сайта, первая автоматизация, цифровая инфраструктура, AI-контент, соцсети и стоимость внедрения.',body)
+p='articles.html'
+library_description=f'{article_count(len(articles))} о сайтах, Telegram Mini Apps, Битрикс24, AI, автоматизации и ведении цифровых проектов.'
+body=f'''
+<section class="page-heading library-heading">
+ <h1>Практическая библиотека</h1>
+ <p class="lead">{e(library_description)}</p>
+</section>
+<div class="library">
+ <div class="library-tools">
+  <div class="library-search" hidden>
+   <label for="library-search">Поиск по статьям</label>
+   <input id="library-search" type="search" placeholder="Например, форма или сайт" autocomplete="off">
+   <p id="library-search-status" role="status"></p>
+  </div>
+  <nav class="library-index" aria-label="Темы статей">
+'''
+for key,name in topics.items():
+ if by_topic[key]:
+  body+=f'<a href="#topic-{key}"><span>{e(name)}</span><small>{article_count(len(by_topic[key]))}</small></a>'
+body+='</nav></div><div class="library-results">'
+body+='<p class="library-empty" hidden>Попробуйте другие слова или более короткий запрос.</p>'
+for key,name in topics.items():
+ if not by_topic[key]:
+  continue
+ keywords={'crm':'Bitrix24 CRM','telegram':'Телеграм Mini App'}.get(key,'')
+ body+=f'<section class="library-topic" id="topic-{key}" aria-labelledby="topic-{key}-title" data-library-keywords="{e(keywords)}"><h2 id="topic-{key}-title">{e(name)}</h2><ul class="library-list">'
+ for article in by_topic[key]:
+  body+=f'''<li data-library-result>
+ <a class="library-row" href="{link(p,article_path(article))}">
+  <div><h3>{e(article['title'])}</h3><p>{e(article['description'])}</p></div>
+  <span class="library-arrow" aria-hidden="true">↗</span>
+ </a>
+</li>'''
+ body+='</ul></section>'
+body+='</div></div>'+contact(p)
+render(p,'Практическая библиотека',library_description,body)
 for a in articles:
- p='articles/'+a['slug']+'.html';body=f'<div class="breadcrumbs"><a href="{link(p,"articles.html")}">Статьи</a> / {e(a["category"])}</div>'+heading(a['category'],e(a['title']),a['description'])
+ key=topic_by_category[a['category']]
+ p=article_path(a)
+ library_link=link(p,'articles.html')
+ body=f'<div class="breadcrumbs"><a href="{library_link}">Библиотека</a> / <a href="{library_link}#topic-{key}">{e(topics[key])}</a></div><section class="page-heading"><h1>{e(a["title"])}</h1><p class="lead">{e(a["description"])}</p></section>'
  body+='<article class="reading"><nav class="article-toc" aria-label="Содержание статьи"><div><strong>В этой статье</strong><ol>'
  for i,s in enumerate(a['sections'],1):body+=f'<li><a href="#part-{i}">{e(s["heading"])}</a></li>'
  body+='</ol></div></nav>'
  for i,s in enumerate(a['sections'],1):body+=f'<section id="part-{i}"><h2>{e(s["heading"])}</h2><p>{e(s["text"])}</p></section>'
- body+=f'<p class="note">Примеры в статье иллюстрируют подход и не описывают клиентские результаты. Состав внедрения зависит от конкретной задачи и возможностей выбранных сервисов.</p><a class="text-link" href="{link(p,"services.html")}#{e(a["service"])}">Услуга по этой теме ↗</a></article>'+contact(p,a['service'])
+ body+=f'<a class="text-link" href="{link(p,"services.html")}#{e(a["service"])}">Услуга по этой теме ↗</a></article>'
+ siblings=by_topic[key]
+ position=siblings.index(a)
+ related=(siblings[position+1:]+siblings[:position])[:3]
+ if related:
+  body+='<nav class="related-reading" aria-labelledby="related-title"><h2 id="related-title">По этой теме</h2><ul class="library-list">'
+  for item in related:
+   body+=f'<li><a class="library-row" href="{link(p,article_path(item))}"><span>{e(item["title"])}</span><span class="library-arrow" aria-hidden="true">↗</span></a></li>'
+  body+=f'</ul><a class="text-link" href="{library_link}#topic-{key}">Все статьи по теме ↗</a></nav>'
  render(p,a['title'],a['description'],body,active='articles.html',article=True)
 # Contact
 p='contact.html';body=heading('Контакты','Обсудим вашу задачу','Оставьте заявку на сайте или напишите мне напрямую.')
-body+='''
+body+=f'''
 <div class="contact-layout">
  <section class="request-form" id="request-form" aria-labelledby="request-form-title">
   <h2 id="request-form-title">Оставить заявку</h2>
+  <p class="advance-note">{e(site['advance_terms'])}</p>
+'''
+body+='''
   <div class="request-form-content">
   <div id="request-form-status" class="request-form-status" role="status"></div>
   <p id="request-form-alternative" hidden><a class="text-link" href="#contact-methods-title">Другие способы связи ↗</a></p>
@@ -315,7 +403,7 @@ payment_methods=(
  ('USDT','TRON (TRC-20)',site['usdt_tron_address'],'assets/usdt-tron-qr.svg','Tronscan','https://tronscan.org/address/{}/transactions'),
  ('Bitcoin','Сеть Bitcoin (BTC)',site['bitcoin_address'],'assets/bitcoin-qr.svg','Blockchair','https://blockchair.com/bitcoin/address/{}'),
 )
-body+='<section class="payment-section" id="payment" aria-labelledby="payment-title"><h2 id="payment-title">Оплата в криптовалюте</h2><div class="payment-grid">'
+body+=f'<section class="payment-section" id="payment" aria-labelledby="payment-title"><h2 id="payment-title">Оплата</h2><p>{e(site["advance_terms"])}</p><h3>Реквизиты для оплаты в криптовалюте</h3><div class="payment-grid">'
 for currency,network,address,qr,explorer,explorer_url in payment_methods:
  body+=f'''
  <div class="payment-method">

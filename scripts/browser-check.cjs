@@ -43,6 +43,20 @@ const base=(process.env.SITE_URL||'http://127.0.0.1:8000').replace(/\/$/,'')+'/'
  await page.keyboard.press('Escape');if(await menu.getAttribute('aria-expanded')!=='false')throw Error('Escape did not close menu');
  await menu.click();await page.getByRole('navigation',{name:'Основная навигация'}).getByRole('link',{name:'Статьи',exact:true}).click();await page.waitForURL('**/articles.html');
  if(await page.locator('nav a[aria-current="page"]').innerText()!=='Статьи')throw Error('Current page');
+ const search=page.getByRole('searchbox',{name:'Поиск по статьям'});
+ const entries=page.locator('[data-library-result]');
+ const articleTotal=paths.filter(path=>path.startsWith('articles/')).length;
+ if(await entries.count()!==articleTotal)throw Error('Library is missing articles');
+ await search.fill('БИТРИКС24 ФОРМА');
+ const matching=await page.locator('[data-library-result]:visible').count();
+ if(matching===0 || matching===articleTotal)throw Error('Library search did not narrow a topical query');
+ await search.fill('xyz123');
+ if(await page.locator('[data-library-result]:visible').count() || !await page.locator('.library-empty').isVisible())throw Error('Library empty state');
+ await search.fill('');
+ if(await page.locator('[data-library-result]:visible').count()!==articleTotal)throw Error('Clearing search did not restore articles');
+ await page.getByRole('navigation',{name:'Темы статей'}).getByRole('link',{name:/Битрикс24/}).click();
+ await page.waitForURL('**/articles.html#topic-crm');
+ if(!await fragmentUnobstructed())throw Error('Library topic fragment under header');
  await page.goto(base);await page.locator('summary').first().click();if(!await page.locator('details').first().getAttribute('open').then(x=>x!==null))throw Error('FAQ');
  await page.screenshot({path:'/tmp/site-mobile.png',fullPage:true});
  await page.setViewportSize({width:1440,height:1050});await page.screenshot({path:'/tmp/site-desktop.png'});
@@ -50,6 +64,8 @@ const base=(process.env.SITE_URL||'http://127.0.0.1:8000').replace(/\/$/,'')+'/'
  if(!await nojs.getByRole('navigation',{name:'Основная навигация'}).isVisible())throw Error('No-JS navigation hidden');
  if(!await nojs.getByRole('navigation',{name:'Содержание статьи'}).isVisible())throw Error('TOC hidden');
  if(!await nojs.locator('.reading').isVisible())throw Error('No-JS content hidden');
+ await nojs.goto(base+'articles.html');
+ if(await nojs.locator('[data-library-result]:visible').count()!==articleTotal)throw Error('No-JS library entries hidden');
  const blocked=await browser.newContext({viewport:{width:390,height:844}});const fail=await blocked.newPage();await fail.route(url=>url.pathname.endsWith('/assets/main.js'),r=>r.abort());await fail.goto(base);if(!await fail.locator('#main-nav').isVisible())throw Error('Navigation hidden after script failure');
  const fallbackContext=await browser.newContext({viewport:{width:390,height:844},reducedMotion:'reduce'});
  await fallbackContext.route(url=>url.pathname.endsWith('/crm/form/loader_25.js'),route=>route.fulfill({
