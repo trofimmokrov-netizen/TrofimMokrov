@@ -116,7 +116,7 @@ def render(path,title,description,body,active=None,article=False):
   body=body.replace(contact(path),pilot_section(path)+contact(path),1)
  nav=''.join(f'<a href="{link(path,p)}"'+(' aria-current="page"' if p==(active or path) else '')+f'>{e(label)}</a>' for p,label in NAV)
  nav+=f'<a href="{e(bot_url,quote=True)}?start=app">Мини-приложение ↗</a>'
- canonical=f'<link rel="canonical" href="{e(base+"/"+path)}">\n<meta property="og:url" content="{e(base+"/"+path)}">' if base else ''
+ canonical=f'<link rel="canonical" href="{e(base+"/"+("" if path=="index.html" else path))}">\n<meta property="og:url" content="{e(base+"/"+("" if path=="index.html" else path))}">' if base else ''
  font_preload=f'<link rel="preload" href="{link(path,"assets/fonts/nunito-semibold.woff2")}" as="font" type="font/woff2" crossorigin>' if path=='index.html' else ''
  ogimage=f'<meta property="og:image" content="{e(base)}/assets/share-card.png"><meta property="og:image:secure_url" content="{e(base)}/assets/share-card.png"><meta property="og:image:type" content="image/png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Трофим Мокров — сайты, AI и автоматизация"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="{e(base)}/assets/share-card.png">' if base else ''
  full_title='Трофим Мокров — сайты, AI и автоматизация' if path=='index.html' else title+' — Трофим Мокров'
@@ -456,7 +456,7 @@ p='404.html';body=heading('404 / Страница не найдена','Каже
 render(p,'Страница не найдена','Перейдите на главную страницу сайта Трофима Мокрова.',body)
 (ROOT/'.nojekyll').touch()
 if base:
- xml='<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'+''.join('<url><loc>'+e(base+'/'+p)+'</loc></url>' for p in outputs if p!='404.html')+'</urlset>\n'
+ xml='<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'+''.join('<url><loc>'+e(base+'/'+('' if p=='index.html' else p))+'</loc></url>' for p in outputs if p!='404.html')+'</urlset>\n'
  (ROOT/'sitemap.xml').write_text(xml);(ROOT/'robots.txt').write_text('User-agent: *\nAllow: /\nSitemap: '+base+'/sitemap.xml\n')
 else:
  for file in ('sitemap.xml','robots.txt'):

@@ -686,3 +686,51 @@ h1,h2 {
   .card:hover {transform:none;background:transparent}
   .button:hover {box-shadow:none}
 }
+
+
+/* Premium editorial design: graphite, warm ivory and restrained champagne. */
+:root {
+  --paper:#f6f5f2;--ink:#202124;--muted:#575b63;--accent:#353b46;
+  --accent-hover:#20252d;--accent-soft:#eae6dd;--tint:#eeece7;
+  --line:#dcdad5;--white:#fff;--radius:20px;
+}
+body {background:var(--paper);font-family:Arial,Helvetica,sans-serif}
+h1,h2,h3 {text-wrap:balance}
+.site-header {border-bottom-color:var(--line)}
+.brand {letter-spacing:-.045em}
+.hero,.contact-banner {
+  --panel-text:#faf9f6;--panel-muted:#d0d1d5;--panel-accent:#e6cda1;
+  background:#20232a;color:var(--panel-text);border-color:#42444b;
+}
+.hero::before {background:radial-gradient(ellipse at 10% 0%,#76654b55,transparent 55%),linear-gradient(135deg,#17191e,#303640)}
+.hero .eyebrow {color:#e6cda1}
+.hero-portrait {background:#30343c;border-color:#ffffff24}
+.hero-portrait::after {background:linear-gradient(110deg,#17191e33,transparent 50%)}
+.hero h1 {letter-spacing:-.055em}
+:is(.hero-actions,.contact-banner) .form-action {color:#24221f}
+:is(.hero-actions,.contact-banner) .form-action:hover {background:#f3dfbd;border-color:#f3dfbd}
+:is(.hero-actions,.contact-banner) .telegram-action {border-color:#ffffff60}
+.button {border-radius:12px}
+.button.secondary:hover {border-color:#a6a39b}
+.home-service,.card,.service-detail,.project-feature,.updates-feed .update-entry {
+  border-color:var(--line);border-radius:var(--radius);
+}
+.card,.service-detail {background:var(--white)}
+.home-service--featured {background:radial-gradient(ellipse at 0 100%,#e8dcc6,transparent 75%),#fff}
+.home-service-icon,.project-cluster-icon {background:#eee7db;color:#55452e}
+.home-service-price {color:#393b42}
+.dark {background:#23262d}
+.dark p {color:#d0d1d5}
+.flow span {border-color:#797b82}
+.contact-banner {border-radius:clamp(20px,3vw,32px)}
+a:focus-visible,button:focus-visible,summary:focus-visible {outline-offset:4px}
+@media (hover:hover) and (pointer:fine) {
+  .home-service:hover,.project-feature:hover {border-color:#a99b83;box-shadow:0 12px 30px #2021240d}
+  .button:hover {box-shadow:0 5px 15px #20212418}
+}
+@media(max-width:600px) {
+  .hero::before {background:radial-gradient(ellipse at 98% 0%,#76654b66,transparent 52%),linear-gradient(145deg,#20232a,#17191e)}
+  .hero-portrait {border-color:#e6cda180}
+  .hero-copy {padding:24px 18px 18px}
+  .hero-actions .button {min-height:48px}
+}
