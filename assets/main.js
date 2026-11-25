@@ -5,6 +5,7 @@
       const copy = payment.querySelector('.wallet-copy');
       const address = payment.querySelector('.wallet-address code');
       const status = payment.querySelector('.wallet-status');
+      if (!copy || !address || !status) return;
       copy.hidden = false;
       copy.addEventListener('click', async () => {
         try {
@@ -89,9 +90,14 @@
     document.documentElement.classList.add('nav-ready');
     const header = navigation.closest('.site-header');
     if (header && 'ResizeObserver' in window) {
+      let lastPadding;
       const updateScrollPadding = () => {
         if (mobile.matches) {
-          document.documentElement.style.setProperty('--sticky-header-scroll-padding', header.offsetHeight + 11 + 'px');
+          const padding = header.offsetHeight + 11 + 'px';
+          if (padding !== lastPadding) {
+            document.documentElement.style.setProperty('--sticky-header-scroll-padding', padding);
+            lastPadding = padding;
+          }
         }
       };
       updateScrollPadding();
@@ -118,18 +124,21 @@
       }));
       return {section, entries};
     });
+    let previousQuery;
     const filterLibrary = () => {
       const query = normalize(librarySearch.value.trim());
+      if (query === previousQuery) return;
+      previousQuery = query;
       const words = query ? query.split(/\s+/).map(searchWord) : [];
       let count = 0;
       for (const {section, entries} of topics) {
         let matches = 0;
         for (const {element, text} of entries) {
           const found = words.every(word => text.includes(word));
-          element.hidden = !found;
+          if (element.hidden === found) element.hidden = !found;
           matches += Number(found);
         }
-        section.hidden = matches === 0;
+        if (section.hidden !== (matches === 0)) section.hidden = matches === 0;
         count += matches;
       }
       index.hidden = words.length > 0;
@@ -137,7 +146,14 @@
       status.textContent = words.length ? 'Найдено материалов: ' + count : '';
     };
     librarySearch.closest('.library-search').hidden = false;
-    librarySearch.addEventListener('input', filterLibrary);
+    let pendingFilter = 0;
+    librarySearch.addEventListener('input', () => {
+      if (pendingFilter) return;
+      pendingFilter = requestAnimationFrame(() => {
+        pendingFilter = 0;
+        filterLibrary();
+      });
+    });
     window.addEventListener('pageshow', filterLibrary);
     filterLibrary();
   }
