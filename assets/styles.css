@@ -680,3 +680,9 @@ h1,h2 {
   .project-feature:hover .tile-arrow .ui-icon,
   .project-feature:hover .project-feature-media img {transform:none}
 }
+
+/* Touch devices do not need persistent hover elevation. */
+@media (hover: none) {
+  .card:hover {transform:none;background:transparent}
+  .button:hover {box-shadow:none}
+}
