@@ -1,0 +1,36 @@
+name: Rebuild generated site
+on:
+  push:
+    branches: [site-quality-v2]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: rebuild-site-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  rebuild:
+    if: github.ref == 'refs/heads/site-quality-v2'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rebuild and validate
+        run: |
+          python3 scripts/build.py
+          python3 scripts/check.py
+          python3 scripts/quality-audit.py
+          python3 -m compileall -q scripts telegram_bot leadfinder
+          for script in assets/main.js miniapp/app.js scripts/*-check.cjs; do node --check "$script"; done
+          python3 -m unittest discover -s telegram_bot/tests
+          python3 -m unittest discover -s leadfinder/tests
+      - name: Commit generated files
+        run: |
+          git add -- '*.html' '*.json' robots.txt sitemap.xml .nojekyll
+          if git diff --cached --quiet; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m "Rebuild validated generated site"
+          python3 scripts/build.py
+          git diff --exit-code
+          git push origin HEAD:site-quality-v2
