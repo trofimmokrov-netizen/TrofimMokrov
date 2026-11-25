@@ -118,18 +118,21 @@
       }));
       return {section, entries};
     });
+    let previousQuery;
     const filterLibrary = () => {
       const query = normalize(librarySearch.value.trim());
+      if (query === previousQuery) return;
+      previousQuery = query;
       const words = query ? query.split(/\s+/).map(searchWord) : [];
       let count = 0;
       for (const {section, entries} of topics) {
         let matches = 0;
         for (const {element, text} of entries) {
           const found = words.every(word => text.includes(word));
-          element.hidden = !found;
+          if (element.hidden === found) element.hidden = !found;
           matches += Number(found);
         }
-        section.hidden = matches === 0;
+        if (section.hidden !== (matches === 0)) section.hidden = matches === 0;
         count += matches;
       }
       index.hidden = words.length > 0;
@@ -137,7 +140,14 @@
       status.textContent = words.length ? 'Найдено материалов: ' + count : '';
     };
     librarySearch.closest('.library-search').hidden = false;
-    librarySearch.addEventListener('input', filterLibrary);
+    let pendingFilter = 0;
+    librarySearch.addEventListener('input', () => {
+      if (pendingFilter) return;
+      pendingFilter = requestAnimationFrame(() => {
+        pendingFilter = 0;
+        filterLibrary();
+      });
+    });
     window.addEventListener('pageshow', filterLibrary);
     filterLibrary();
   }
