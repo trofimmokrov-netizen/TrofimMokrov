@@ -1,0 +1,24 @@
+name: Quality audit (SEO and internal links)
+
+on:
+  push:
+    branches: [site-quality-v2]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Validate static site metadata and links
+        run: python3 scripts/quality-audit.py
+      - name: Run Python repository check
+        run: python3 scripts/check.py
