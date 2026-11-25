@@ -5,6 +5,7 @@
       const copy = payment.querySelector('.wallet-copy');
       const address = payment.querySelector('.wallet-address code');
       const status = payment.querySelector('.wallet-status');
+      if (!copy || !address || !status) return;
       copy.hidden = false;
       copy.addEventListener('click', async () => {
         try {
@@ -89,9 +90,14 @@
     document.documentElement.classList.add('nav-ready');
     const header = navigation.closest('.site-header');
     if (header && 'ResizeObserver' in window) {
+      let lastPadding;
       const updateScrollPadding = () => {
         if (mobile.matches) {
-          document.documentElement.style.setProperty('--sticky-header-scroll-padding', header.offsetHeight + 11 + 'px');
+          const padding = header.offsetHeight + 11 + 'px';
+          if (padding !== lastPadding) {
+            document.documentElement.style.setProperty('--sticky-header-scroll-padding', padding);
+            lastPadding = padding;
+          }
         }
       };
       updateScrollPadding();
