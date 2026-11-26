@@ -1,5 +1,19 @@
 (() => {
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  const activityScript = document.body.dataset.activityScript;
+  if (activityScript) {
+    let hasConsent = false;
+    try {
+      hasConsent = localStorage.getItem('trofim.activity.opt-in.v1') === 'yes';
+    } catch {
+      // The site and tools still work without browser storage.
+    }
+    if (hasConsent || document.querySelector('[data-activity-panel]')) {
+      const script = document.createElement('script');
+      script.src = activityScript;
+      document.head.append(script);
+    }
+  }
   const estimator = document.querySelector('[data-estimate-script]');
   if (estimator) {
     const loadEstimator = () => {
@@ -156,7 +170,7 @@
   }
 
   function revealProjectMedia(frame) {
-    const image = frame.querySelector(':scope > img');
+    const image = frame.querySelector('img');
     if (!image) return;
     if (!image.complete) {
       image.addEventListener('load', () => observer.observe(frame), {once: true});

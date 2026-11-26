@@ -2,7 +2,7 @@ name: Site health checks
 
 on:
   push:
-    branches: [main]
+    branches: [main, ecosystem-v5]
   pull_request:
     branches: [main]
   schedule:
@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
 
@@ -47,14 +47,35 @@ jobs:
           python3 -m unittest discover -s telegram_bot/tests
           python3 -m unittest discover -s leadfinder/tests
 
+      - name: Verify browser test dependencies
+        id: dependencies
+        if: github.event_name == 'push' || github.event_name == 'pull_request'
+        run: |
+          npm ci --ignore-scripts --no-audit
+          npm audit --audit-level=high
+
+      - name: Test ecosystem in a browser
+        id: browser
+        if: github.event_name == 'push' || github.event_name == 'pull_request'
+        run: |
+          export CHROMIUM_PATH="$(command -v google-chrome || command -v chromium || true)"
+          if [ -z "$CHROMIUM_PATH" ]; then
+            npx --no-install playwright install chromium
+          fi
+          python3 -m http.server 8788 --bind 127.0.0.1 > /tmp/trofim-preview.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          curl --fail --silent --retry 5 --retry-connrefused http://127.0.0.1:8788/ -o /dev/null
+          SITE_URL=http://127.0.0.1:8788/ npm run test:v5
+
       - name: Check published GitHub Pages
         id: published
-        if: github.event_name != 'pull_request'
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         run: python3 scripts/check-published.py
 
       - name: Probe Bitrix24 public loaders
         id: bitrix
-        if: github.event_name != 'pull_request'
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         continue-on-error: true
         run: |
           result=0
@@ -70,6 +91,8 @@ jobs:
           GENERATED: ${{ steps.generated.outcome }}
           SYNTAX: ${{ steps.syntax.outcome }}
           TESTS: ${{ steps.tests.outcome }}
+          DEPENDENCIES: ${{ steps.dependencies.outcome }}
+          BROWSER: ${{ steps.browser.outcome }}
           PUBLISHED: ${{ steps.published.outcome }}
           BITRIX: ${{ steps.bitrix.outcome }}
           TELEGRAM_ALERTS: ${{ secrets.TROFIM_MONITOR_BOT_TOKEN != '' && secrets.TROFIM_MONITOR_CHAT_ID != '' }}
@@ -80,6 +103,8 @@ jobs:
             printf '| Generated pages | %s |\n' "$GENERATED"
             printf '| Python and JavaScript syntax | %s |\n' "$SYNTAX"
             printf '| Repository tests | %s |\n' "$TESTS"
+            printf '| Test dependency audit | %s |\n' "$DEPENDENCIES"
+            printf '| Ecosystem browser tests | %s |\n' "$BROWSER"
             printf '| Published GitHub Pages | %s |\n' "$PUBLISHED"
             printf '| Bitrix24 public loader checks | %s |\n' "$BITRIX"
             if [ "$TELEGRAM_ALERTS" = true ]; then

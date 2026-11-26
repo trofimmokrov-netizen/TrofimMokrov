@@ -9,12 +9,14 @@ const base=(process.env.SITE_URL||'http://127.0.0.1:8000').replace(/\/$/,'')+'/'
  const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto(base,{waitUntil:'networkidle'});
  if(process.argv.includes('--capture')) await page.screenshot({path:path.join(root,'assets/site-preview.png')});
- const paths=['index.html','about.html','services.html','portfolio.html','articles.html','updates.html','contact.html','404.html',...fs.readdirSync(path.join(root,'articles')).filter(n=>n.endsWith('.html')).map(n=>'articles/'+n)];
+ const paths=['', 'articles', 'cases'].flatMap(folder=>fs.readdirSync(path.join(root,folder))
+   .filter(name=>name.endsWith('.html')).map(name=>folder ? folder+'/'+name : name));
  let count=0;
  for(const width of [320,390,768,1440]){
   await page.setViewportSize({width,height:900});
   for(const path of paths){
-   const res=await page.goto(base+path,{waitUntil:'networkidle'});if(res.status()!==200)throw Error('HTTP '+path);
+   const res=await page.goto(base+path,{waitUntil:'domcontentloaded'});if(res.status()!==200)throw Error('HTTP '+path);
+   await page.evaluate(()=>document.fonts.ready);
    if(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth))throw Error('Overflow '+path+' '+width);
    await page.locator('img').evaluateAll(async xs=>{await Promise.all(xs.map(async x=>{x.loading='eager';await x.decode();}));});
    if(await page.locator('img').evaluateAll(xs=>xs.some(x=>!x.naturalWidth)))throw Error('Broken image '+path);
@@ -57,7 +59,10 @@ const base=(process.env.SITE_URL||'http://127.0.0.1:8000').replace(/\/$/,'')+'/'
  await page.getByRole('navigation',{name:'Темы статей'}).getByRole('link',{name:/Битрикс24/}).click();
  await page.waitForURL('**/articles.html#topic-crm');
  if(!await fragmentUnobstructed())throw Error('Library topic fragment under header');
- await page.goto(base);await page.locator('summary').first().click();if(!await page.locator('details').first().getAttribute('open').then(x=>x!==null))throw Error('FAQ');
+ await page.goto(base);
+ const faq=page.locator('.home-faq details').first();
+ await faq.locator('summary').click();
+ if(await faq.getAttribute('open')===null)throw Error('FAQ');
  await page.screenshot({path:'/tmp/site-mobile.png',fullPage:true});
  await page.setViewportSize({width:1440,height:1050});await page.screenshot({path:'/tmp/site-desktop.png'});
  const plain=await browser.newContext({javaScriptEnabled:false,viewport:{width:390,height:844}});const nojs=await plain.newPage();await nojs.goto(base+'articles/automation-start.html');

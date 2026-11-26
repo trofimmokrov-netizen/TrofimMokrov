@@ -1,0 +1,11 @@
+{
+  "name": "trofimmokrov-site-checks",
+  "version": "5.0.0",
+  "private": true,
+  "scripts": {
+    "test:v5": "node scripts/v5-check.cjs"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  }
+}

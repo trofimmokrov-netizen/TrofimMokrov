@@ -15,12 +15,11 @@ class Page(HTMLParser):
   if tag=='meta' and a.get('name')=='description':self.description=bool(a.get('content'))
   if tag=='meta' and a.get('property')=='og:title':self.og=True
   if tag=='img':assert 'alt' in a,'Image missing alt'
-  if tag=='script' and a.get('type')=='application/ld+json':self.in_json=True
   for key in ('href','src'):
    if key in a:self.refs.append(a[key])
  def handle_data(self,data):self.text.append(data)
 pages={}
-for path in list(ROOT.glob('*.html'))+list((ROOT/'articles').glob('*.html')):
+for path in [*ROOT.glob('*.html'),*(ROOT/'articles').glob('*.html'),*(ROOT/'cases').glob('*.html')]:
  page=Page();page.feed(path.read_text());pages[path.resolve()]=page
  assert page.h1==1,(path,'h1 count',page.h1)
  assert len(page.ids)==len(set(page.ids)),(path,'duplicate IDs')

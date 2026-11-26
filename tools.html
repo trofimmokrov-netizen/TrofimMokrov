@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#f5f5ee"><script>
+(() => {
+  const key = 'trofim-site-theme';
+  let mode = 'auto';
+  for (const name of ['sessionStorage', 'localStorage']) {
+    try {
+      const value = window[name].getItem(key);
+      if (value === 'auto' || value === 'light' || value === 'dark') { mode = value; break; }
+    } catch {}
+  }
+  const dark = mode === 'dark' || (mode === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  document.documentElement.dataset.themeMode = mode;
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#101b15' : '#f4f5ee');
+})();
+</script><title>Бесплатные цифровые инструменты — Трофим Мокров</title><meta name="description" content="Бесплатные инструменты для цифрового проекта. Брифы, контент-план, бюджет, чек-листы, SEO, UTM и ссылки для Telegram."><meta property="og:title" content="Бесплатные цифровые инструменты — Трофим Мокров"><meta property="og:description" content="Бесплатные инструменты для цифрового проекта. Брифы, контент-план, бюджет, чек-листы, SEO, UTM и ссылки для Telegram."><meta property="og:type" content="website"><meta property="og:locale" content="ru_RU"><meta property="og:site_name" content="Трофим Мокров"><link rel="canonical" href="https://trofimmokrov-netizen.github.io/TrofimMokrov/tools.html">
+<meta property="og:url" content="https://trofimmokrov-netizen.github.io/TrofimMokrov/tools.html"><meta property="og:image" content="https://trofimmokrov-netizen.github.io/TrofimMokrov/assets/share-card.png"><meta property="og:image:secure_url" content="https://trofimmokrov-netizen.github.io/TrofimMokrov/assets/share-card.png"><meta property="og:image:type" content="image/png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Трофим Мокров — сайты, AI и автоматизация"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://trofimmokrov-netizen.github.io/TrofimMokrov/assets/share-card.png"><link rel="icon" href="logo.svg" type="image/svg+xml"><link rel="stylesheet" href="assets/styles.css?v=9c4fcc579f96"><link rel="stylesheet" href="assets/v5-tools.css?v=465750bc9fec"><link rel="stylesheet" href="assets/ecosystem-v5.css?v=5e54622ceea7"><script>document.documentElement.classList.add('js');</script><script src="assets/main.js?v=7b0ca70626c6" defer></script><script src="assets/v5-theme.js?v=4517af3deb4e" defer></script><script src="assets/v5-tools.js?v=5514d6c5dd68" defer></script><script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "Person", "name": "Трофим Мокров", "email": "trofimmokrov@gmail.com", "telephone": "+79159982554", "sameAs": ["https://t.me/TrofimMokrov", "https://www.instagram.com/trofimmokrov/", "https://vk.com/trofimmokrov"], "@id": "https://trofimmokrov-netizen.github.io/TrofimMokrov/#trofim", "url": "https://trofimmokrov-netizen.github.io/TrofimMokrov/"}]}</script></head>
+<body data-activity-script="assets/v5-activity.js?v=b87726ee5dbb" data-activity-page="" data-activity-services="ai-agents,setup,websites,telegram-bots,automation,ai-content,social,ecosystem,identity,personal-solutions,business-system,social-actions"><a class="skip" href="#main">К содержанию</a>
+<div class="wrap">
+ <header class="site-header">
+  <a class="brand" href="index.html"><img src="logo.svg" width="36" height="36" alt=""><span>Трофим Мокров</span></a>
+  <div class="header-actions">
+   <a class="header-telegram" href="https://t.me/TrofimAI_bot?start=site" aria-label="Открыть Telegram-бота"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M21 3 3 10.5l6.5 2.7L18 7l-6.5 8 6 5L21 3zM9.5 13.2l2 6 2.4-2.2"/></svg>Telegram</a>
+   <div class="theme-control" hidden>
+  <button type="button" class="theme-toggle" aria-label="Оформление сайта" title="Оформление сайта"
+    aria-expanded="false" aria-controls="v5-theme-options"><svg class="theme-sun" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10zM12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="theme-moon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M20.5 14.5A8.8 8.8 0 0 1 9.5 3.5a8.9 8.9 0 1 0 11 11z"/></svg></button>
+  <div class="theme-options" id="v5-theme-options" hidden>
+    <fieldset>
+      <legend>Тема оформления</legend>
+      <label><input type="radio" name="v5-site-theme" value="auto" checked>Как в системе</label>
+      <label><input type="radio" name="v5-site-theme" value="light">Светлая</label>
+      <label><input type="radio" name="v5-site-theme" value="dark">Тёмная</label>
+    </fieldset>
+  </div>
+</div>
+   <button class="menu-button" type="button" aria-controls="main-nav" aria-expanded="false" aria-label="Меню"><span class="menu-open-icon" aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="menu-close-icon" aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"/></svg></span></button>
+  </div>
+  <nav id="main-nav" aria-label="Основная навигация"><a href="index.html">Главная</a><a href="services.html">Услуги</a><a href="project.html">Конструктор</a><a href="portfolio.html">Портфолио</a><a href="articles.html">Статьи</a><a href="tools.html" aria-current="page">Инструменты</a><a href="ecosystem.html">Экосистема</a><a href="contact.html">Контакты</a><a href="https://t.me/TrofimAI_bot?start=app">Мини-приложение <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 19 19 5M5 5h14v14"/></svg></a></nav>
+ </header>
+ <main id="main"><section class="page-heading"><div class="eyebrow">Инструменты</div><h1>Бесплатные цифровые инструменты</h1><p class="lead">Бесплатные инструменты для цифрового проекта. Брифы, контент-план, бюджет, чек-листы, SEO, UTM и ссылки для Telegram.</p></section><section class="digital-tools" aria-labelledby="digital-tools-title">
+ <div class="tools-intro"><h2 id="digital-tools-title">Инструменты для проекта</h2><p>Введённые данные остаются в этой вкладке. Для черновиков используйте рабочие примеры без персональных данных.</p></div>
+ <div class="tools-list"><details class="digital-tool" id="tool-website-brief" data-tool="website-brief" name="digital-tools">
+ <summary><span class="tool-summary"><span class="tool-name">Бриф на сайт</span><span class="tool-description">Соберите задачу, аудиторию, страницы и материалы для проекта.</span></span></summary>
+ <p class="tool-unavailable" data-tool-unavailable>Чтобы использовать инструмент, включите JavaScript в браузере.</p>
+ <form class="tool-form" autocomplete="off" hidden>
+  <fieldset class="tool-inputs" disabled><legend class="sr-only">Бриф на сайт</legend>
+   <label class="tool-field"><span>Проект или компания</span><input name="project" type="text" maxlength="120" required></label><label class="tool-field"><span>Для кого сайт</span><input name="audience" type="text" maxlength="220" required></label><label class="tool-field"><span>Что посетитель должен сделать</span><input name="goal" type="text" maxlength="220" required></label><label class="tool-field"><span>Страницы или разделы</span><textarea name="pages" rows="3" maxlength="600"></textarea></label><label class="tool-field"><span>Готовые материалы</span><textarea name="materials" rows="3" maxlength="600"></textarea></label><label class="tool-field"><span>Ссылка на пример</span><input name="reference" type="url" maxlength="1200" placeholder="https://example.com"></label>
+   <button class="button" type="submit">Собрать бриф</button>
+  </fieldset>
+  <div class="tool-result" data-tool-result hidden>
+   <label class="tool-field"><span>Результат</span><textarea data-tool-output rows="9" readonly></textarea></label>
+   <div class="tool-actions">
+    <button class="button secondary" type="button" data-tool-copy>Скопировать</button>
+    <button class="button secondary" type="button" data-tool-download>Скачать .txt</button>
+   </div>
+  </div>
+  <p class="tool-status" role="status"></p>
+ </form>
+</details><details class="digital-tool" id="tool-telegram-brief" data-tool="telegram-brief" name="digital-tools">
+ <summary><span class="tool-summary"><span class="tool-name">Бриф на Telegram-бота</span><span class="tool-description">Опишите вход, основной сценарий и передачу обращения.</span></span></summary>
+ <p class="tool-unavailable" data-tool-unavailable>Чтобы использовать инструмент, включите JavaScript в браузере.</p>
+ <form class="tool-form" autocomplete="off" hidden>
+  <fieldset class="tool-inputs" disabled><legend class="sr-only">Бриф на Telegram-бота</legend>
+   <label class="tool-field"><span>Проект или название бота</span><input name="project" type="text" maxlength="120" required></label><label class="tool-field"><span>Кто будет пользоваться ботом</span><input name="audience" type="text" maxlength="220" required></label><label class="tool-field"><span>Главный сценарий</span><textarea name="journey" rows="3" maxlength="600" required></textarea><small>Например, выбрать услугу, указать дату и получить подтверждение.</small></label><label class="tool-field"><span>Куда передаётся запрос</span><input name="handoff" type="text" maxlength="220"></label><label class="tool-field"><span>Сервисы и интеграции</span><input name="integrations" type="text" maxlength="300"></label><label class="tool-field"><span>Мини-приложение</span><select name="miniapp"><option value="Обсудить на старте">Обсудить на старте</option><option value="Нужно">Нужно</option><option value="Для запуска хватит бота">Для запуска хватит бота</option></select></label>
+   <button class="button" type="submit">Собрать бриф</button>
+  </fieldset>
+  <div class="tool-result" data-tool-result hidden>
+   <label class="tool-field"><span>Результат</span><textarea data-tool-output rows="9" readonly></textarea></label>
+   <div class="tool-actions">
+    <button class="button secondary" type="button" data-tool-copy>Скопировать</button>
+    <button class="button secondary" type="button" data-tool-download>Скачать .txt</button>
+   </div>
+  </div>
+  <p class="tool-status" role="status"></p>
+ </form>
+</details><details class="digital-tool" id="tool-content-plan" data-tool="content-plan" name="digital-tools">
+ <summary><span class="tool-summary"><span class="tool-name">План публикаций</span><span class="tool-description">Получите темы, форматы и вопросы для редакционного плана.</span></span></summary>
+ <p class="tool-unavailable" data-tool-unavailable>Чтобы использовать инструмент, включите JavaScript в браузере.</p>
+ <form class="tool-form" autocomplete="off" hidden>
+  <fieldset class="tool-inputs" disabled><legend class="sr-only">План публикаций</legend>
+   <label class="tool-field"><span>Тема или продукт</span><input name="topic" type="text" maxlength="150" required></label><label class="tool-field"><span>Для кого публикуете</span><input name="audience" type="text" maxlength="150" required></label><label class="tool-field"><span>Задача публикаций</span><select name="goal"><option value="introduce">Познакомить с темой</option><option value="explain">Объяснить выбор и процесс</option><option value="requests">Получить обращения</option></select></label><label class="tool-field"><span>Площадка</span><select name="channel"><option value="telegram">Telegram</option><option value="vk">ВКонтакте</option><option value="instagram">Instagram</option><option value="website">Сайт</option></select></label><label class="tool-field"><span>Период</span><select name="weeks"><option value="1">1 неделя</option><option value="2">2 недели</option><option value="4">4 недели</option></select></label><label class="tool-field"><span>Публикаций в неделю</span><select name="frequency"><option value="1">1 публикация</option><option value="2">2 публикации</option><option value="3">3 публикации</option></select></label>
+   <button class="button" type="submit">Собрать план</button>
+  </fieldset>
+  <div class="tool-result" data-tool-result hidden>
+   <label class="tool-field"><span>Результат</span><textarea data-tool-output rows="9" readonly></textarea></label>
+   <div class="tool-actions">
+    <button class="button secondary" type="button" data-tool-copy>Скопировать</button>
+    <button class="button secondary" type="button" data-tool-download>Скачать .txt</button>
+   </div>
+  </div>
+  <p class="tool-status" role="status"></p>
+ </form>
+</details><details class="digital-tool" id="tool-budget" data-tool="budget" name="digital-tools">
+ <summary><span class="tool-summary"><span class="tool-name">Калькулятор бюджета</span><span class="tool-description">Посчитайте работы по каталогу и сравните разовые и ежемесячные расходы.</span></span></summary>
+ <p class="tool-unavailable" data-tool-unavailable>Чтобы использовать инструмент, включите JavaScript в браузере.</p>
+ <form class="tool-form" autocomplete="off" hidden>
+  <fieldset class="tool-inputs" disabled><legend class="sr-only">Калькулятор бюджета</legend>
+   <fieldset class="tool-choices"><legend>Выберите услуги</legend><label class="tool-choice"><input type="checkbox" name="service" value="ai-agents"><span><strong>AI-агенты для контента</strong><small>10 000 ₽ · разовое подключение</small></span></label><label class="tool-choice"><input type="checkbox" name="service" value="setup"><span><strong>Настройка устройств</strong><small>от 3 000 ₽ · за задачу · заказ от 5 000 ₽</small></span></label><label class="tool-choice"><input type="checkbox" name="service" value="websites"><span><strong>Сайты с помощью AI</strong><small>от 10 000 ₽ · за сайт-визитку</small></span></label><label class="tool-choice"><input type="checkbox" name="service" value="telegram-bots"><span><strong>Telegram-бот и мини-приложение</strong><small>от 10 000 ₽ · разовая базовая настройка</small></span></label><label class="tool-choice"><input type="checkbox" name="service" value="automation"><span><strong>Автоматизация процессов</strong><small>от 10 000 ₽ · за один сценарий</small></span></label><label class="tool-choice"><input type="checkbox" name="service" value="ai-content"><span><strong>AI-изображения</strong><small>1 000 ₽ · за изображение · заказ от 5 000 ₽</small></span></label><label class="tool-choice"><input type="checkbox" name="service" value="social"><span><strong>Контент и соцсети</strong><small>от 15 000 ₽ · в месяц · одна площадка</small></span></label><label class="tool-choice"><input type="checkbox" name="service" value="ecosystem"><span><strong>Цифровая инфраструктура</strong><small>от 30 000 ₽ · за базовый запуск</small></span></label><label class="tool-choice"><input type="checkbox" name="service" value="identity"><span><strong>Идея, название и стиль</strong><small>от 25 000 ₽ · за базовую концепцию</small></span></label><label class="tool-choice"><input type="checkbox" name="service" value="personal-solutions"><span><strong>Индивидуальные решения и сопровождение</strong><small>Индивидуальный расчёт · после разбора задачи</small></span></label><label class="tool-choice"><input type="checkbox" name="service" value="business-system"><span><strong>Комплексная настройка системы</strong><small>от 10 000 ₽ · за первый этап настройки</small></span></label><label class="tool-choice"><input type="checkbox" name="service" value="social-actions"><span><strong>Агент для действий в соцсетях</strong><small>Индивидуальный расчёт · по выбранному сценарию</small></span></label></fieldset><label class="tool-field"><span>Количество AI-изображений</span><input name="images" type="number" min="1" max="1000" step="1" value="1" required><small>Учитывается, если выбрана услуга «AI-изображения».</small></label><label class="tool-field"><span>Месяцев сопровождения</span><input name="months" type="number" min="1" max="60" step="1" value="1" required><small>Учитывается для услуг с ценой за месяц.</small></label>
+   <button class="button" type="submit">Рассчитать бюджет</button>
+  </fieldset>
+  <div class="tool-result" data-tool-result hidden>
+   <label class="tool-field"><span>Результат</span><textarea data-tool-output rows="9" readonly></textarea></label>
+   <div class="tool-actions">
+    <button class="button secondary" type="button" data-tool-copy>Скопировать</button>
+    <button class="button secondary" type="button" data-tool-download>Скачать .txt</button>
+   </div>
+  </div>
+  <p class="tool-status" role="status"></p>
+ </form>
+</details><details class="digital-tool" id="tool-launch-checklist" data-tool="launch-checklist" name="digital-tools">
+ <summary><span class="tool-summary"><span class="tool-name">Чек-лист запуска сайта</span><span class="tool-description">Отметьте готовые пункты и сохраните список перед публикацией.</span></span></summary>
+ <p class="tool-unavailable" data-tool-unavailable>Чтобы использовать инструмент, включите JavaScript в браузере.</p>
+ <form class="tool-form" autocomplete="off" hidden>
+  <fieldset class="tool-inputs" disabled><legend class="sr-only">Чек-лист запуска сайта</legend>
+   <label class="tool-field"><span>Название сайта</span><input name="project" type="text" maxlength="120"></label><fieldset class="tool-choices"><legend>Что уже проверено</legend><label class="tool-choice"><input type="checkbox" name="done" value="mobile"><span>Основной путь на телефоне и компьютере</span></label><label class="tool-choice"><input type="checkbox" name="done" value="content"><span>Тексты, цены, контакты и права на изображения</span></label><label class="tool-choice"><input type="checkbox" name="done" value="forms"><span>Формы, внешние ссылки и подтверждение заявки</span></label><label class="tool-choice"><input type="checkbox" name="done" value="search"><span>Title, description, канонические URL и карта сайта</span></label><label class="tool-choice"><input type="checkbox" name="done" value="domain"><span>Домен, HTTPS и перенаправления старых адресов</span></label><label class="tool-choice"><input type="checkbox" name="done" value="tracking"><span>Аналитика и настройки согласия, если они используются</span></label><label class="tool-choice"><input type="checkbox" name="done" value="backup"><span>Резервная версия и порядок отката</span></label><label class="tool-choice"><input type="checkbox" name="done" value="owner"><span>Доступ владельца и ответственный за обновления</span></label></fieldset>
+   <button class="button" type="submit">Собрать чек-лист</button>
+  </fieldset>
+  <div class="tool-result" data-tool-result hidden>
+   <label class="tool-field"><span>Результат</span><textarea data-tool-output rows="9" readonly></textarea></label>
+   <div class="tool-actions">
+    <button class="button secondary" type="button" data-tool-copy>Скопировать</button>
+    <button class="button secondary" type="button" data-tool-download>Скачать .txt</button>
+   </div>
+  </div>
+  <p class="tool-status" role="status"></p>
+ </form>
+</details><details class="digital-tool" id="tool-crm-checklist" data-tool="crm-checklist" name="digital-tools">
+ <summary><span class="tool-summary"><span class="tool-name">Чек-лист настройки CRM</span><span class="tool-description">Проверьте входящие заявки, назначение, уведомления и отчёты.</span></span></summary>
+ <p class="tool-unavailable" data-tool-unavailable>Чтобы использовать инструмент, включите JavaScript в браузере.</p>
+ <form class="tool-form" autocomplete="off" hidden>
+  <fieldset class="tool-inputs" disabled><legend class="sr-only">Чек-лист настройки CRM</legend>
+   <label class="tool-field"><span>Название воронки или проекта</span><input name="project" type="text" maxlength="120"></label><fieldset class="tool-choices"><legend>Что уже проверено</legend><label class="tool-choice"><input type="checkbox" name="done" value="intake"><span>Источники заявок и обязательные поля</span></label><label class="tool-choice"><input type="checkbox" name="done" value="mapping"><span>Передача полей в нужную карточку</span></label><label class="tool-choice"><input type="checkbox" name="done" value="stages"><span>Стадии и ответственность за переходы</span></label><label class="tool-choice"><input type="checkbox" name="done" value="routing"><span>Назначение заявки и резервная очередь</span></label><label class="tool-choice"><input type="checkbox" name="done" value="dupes"><span>Повторные обращения, дубли и повторная отправка</span></label><label class="tool-choice"><input type="checkbox" name="done" value="alerts"><span>Уведомления в рабочее время и замещение</span></label><label class="tool-choice"><input type="checkbox" name="done" value="access"><span>Роли, доступ к данным и порядок хранения</span></label><label class="tool-choice"><input type="checkbox" name="done" value="reports"><span>Отчёт по заявкам и контрольный сценарий</span></label></fieldset>
+   <button class="button" type="submit">Собрать чек-лист</button>
+  </fieldset>
+  <div class="tool-result" data-tool-result hidden>
+   <label class="tool-field"><span>Результат</span><textarea data-tool-output rows="9" readonly></textarea></label>
+   <div class="tool-actions">
+    <button class="button secondary" type="button" data-tool-copy>Скопировать</button>
+    <button class="button secondary" type="button" data-tool-download>Скачать .txt</button>
+   </div>
+  </div>
+  <p class="tool-status" role="status"></p>
+ </form>
+</details><details class="digital-tool" id="tool-seo" data-tool="seo" name="digital-tools">
+ <summary><span class="tool-summary"><span class="tool-name">Шаблоны title и description</span><span class="tool-description">Подготовьте варианты метатегов для услуги, статьи или проекта.</span></span></summary>
+ <p class="tool-unavailable" data-tool-unavailable>Чтобы использовать инструмент, включите JavaScript в браузере.</p>
+ <form class="tool-form" autocomplete="off" hidden>
+  <fieldset class="tool-inputs" disabled><legend class="sr-only">Шаблоны title и description</legend>
+   <label class="tool-field"><span>Тип страницы</span><select name="pageType"><option value="service">Услуга</option><option value="article">Статья</option><option value="case">Проект</option></select></label><label class="tool-field"><span>Тема страницы</span><input name="topic" type="text" maxlength="110" required></label><label class="tool-field"><span>Что читатель узнает или сможет сделать</span><input name="benefit" type="text" maxlength="175" required><small>Напишите коротким предложением. Например, сравните два способа подключения.</small></label><label class="tool-field"><span>Название бренда</span><input name="brand" type="text" maxlength="60"></label><label class="tool-field"><span>Город или регион</span><input name="region" type="text" maxlength="60"><small>Заполняйте для услуги, доступной в этом регионе.</small></label>
+   <button class="button" type="submit">Подготовить метатеги</button>
+  </fieldset>
+  <div class="tool-result" data-tool-result hidden>
+   <label class="tool-field"><span>Результат</span><textarea data-tool-output rows="9" readonly></textarea></label>
+   <div class="tool-actions">
+    <button class="button secondary" type="button" data-tool-copy>Скопировать</button>
+    <button class="button secondary" type="button" data-tool-download>Скачать .txt</button>
+   </div>
+  </div>
+  <p class="tool-status" role="status"></p>
+ </form>
+</details><details class="digital-tool" id="tool-utm" data-tool="utm" name="digital-tools">
+ <summary><span class="tool-summary"><span class="tool-name">Генератор UTM-ссылок</span><span class="tool-description">Добавьте метки кампании. Другие параметры и якорь сохраняются.</span></span></summary>
+ <p class="tool-unavailable" data-tool-unavailable>Чтобы использовать инструмент, включите JavaScript в браузере.</p>
+ <form class="tool-form" autocomplete="off" hidden>
+  <fieldset class="tool-inputs" disabled><legend class="sr-only">Генератор UTM-ссылок</legend>
+   <label class="tool-field"><span>Адрес страницы</span><input name="url" type="url" maxlength="1500" required placeholder="https://example.com/"></label><label class="tool-field"><span>Источник · utm_source</span><input name="utm_source" type="text" maxlength="120" required placeholder="telegram"></label><label class="tool-field"><span>Канал продвижения · utm_medium</span><input name="utm_medium" type="text" maxlength="120" required placeholder="social"></label><label class="tool-field"><span>Кампания · utm_campaign</span><input name="utm_campaign" type="text" maxlength="120" required placeholder="spring_launch"></label><label class="tool-field"><span>Вариант объявления · utm_content</span><input name="utm_content" type="text" maxlength="120"></label><label class="tool-field"><span>Поисковая фраза · utm_term</span><input name="utm_term" type="text" maxlength="120"></label>
+   <button class="button" type="submit">Собрать UTM-ссылку</button>
+  </fieldset>
+  <div class="tool-result" data-tool-result hidden>
+   <label class="tool-field"><span>Результат</span><textarea data-tool-output rows="9" readonly></textarea></label>
+   <div class="tool-actions">
+    <button class="button secondary" type="button" data-tool-copy>Скопировать</button>
+    <button class="button secondary" type="button" data-tool-download>Скачать .txt</button>
+   </div>
+  </div>
+  <p class="tool-status" role="status"></p>
+ </form>
+</details><details class="digital-tool" id="tool-telegram-link" data-tool="telegram-link" name="digital-tools">
+ <summary><span class="tool-summary"><span class="tool-name">Генератор ссылок Telegram</span><span class="tool-description">Соберите ссылку на профиль, старт бота или его мини-приложение.</span></span></summary>
+ <p class="tool-unavailable" data-tool-unavailable>Чтобы использовать инструмент, включите JavaScript в браузере.</p>
+ <form class="tool-form" autocomplete="off" hidden>
+  <fieldset class="tool-inputs" disabled><legend class="sr-only">Генератор ссылок Telegram</legend>
+   <label class="tool-field"><span>Имя в Telegram</span><input name="username" type="text" maxlength="33" required placeholder="@example_bot"></label><label class="tool-field"><span>Что открыть</span><select name="mode"><option value="start">Бот</option><option value="profile">Профиль или канал</option><option value="app">Мини-приложение</option></select></label><label class="tool-field"><span>Параметр запуска</span><input name="payload" type="text" maxlength="512"><small>Латиница, цифры, подчёркивание и дефис. До 64 символов для бота и до 512 для мини-приложения.</small></label><label class="tool-field"><span>Короткое имя мини-приложения</span><input name="appName" type="text" maxlength="32"><small>Оставьте поле пустым для основного Mini App.</small></label>
+   <button class="button" type="submit">Собрать ссылку</button>
+  </fieldset>
+  <div class="tool-result" data-tool-result hidden>
+   <label class="tool-field"><span>Результат</span><textarea data-tool-output rows="9" readonly></textarea></label>
+   <div class="tool-actions">
+    <button class="button secondary" type="button" data-tool-copy>Скопировать</button>
+    <button class="button secondary" type="button" data-tool-download>Скачать .txt</button>
+   </div>
+  </div>
+  <p class="tool-status" role="status"></p>
+ </form>
+</details><details class="digital-tool" id="tool-automation-time" data-tool="automation-time" name="digital-tools">
+ <summary><span class="tool-summary"><span class="tool-name">Экономия времени на автоматизации</span><span class="tool-description">Оцените еженедельный эффект и срок возврата времени на настройку.</span></span></summary>
+ <p class="tool-unavailable" data-tool-unavailable>Чтобы использовать инструмент, включите JavaScript в браузере.</p>
+ <form class="tool-form" autocomplete="off" hidden>
+  <fieldset class="tool-inputs" disabled><legend class="sr-only">Экономия времени на автоматизации</legend>
+   <label class="tool-field"><span>Минут на один повтор сейчас</span><input name="before" type="number" min="0" max="10080" step="0.1" required></label><label class="tool-field"><span>Минут на повтор после внедрения</span><input name="after" type="number" min="0" max="10080" step="0.1" required><small>Учтите ручную проверку результата.</small></label><label class="tool-field"><span>Повторов в неделю</span><input name="frequency" type="number" min="1" max="10000" step="1" required></label><label class="tool-field"><span>Минут на обслуживание в неделю</span><input name="maintenance" type="number" min="0" max="10080" step="0.1" value="0" required></label><label class="tool-field"><span>Часов на настройку и тестирование</span><input name="setup" type="number" min="0" max="10000" step="0.1" value="0" required></label>
+   <button class="button" type="submit">Рассчитать время</button>
+  </fieldset>
+  <div class="tool-result" data-tool-result hidden>
+   <label class="tool-field"><span>Результат</span><textarea data-tool-output rows="9" readonly></textarea></label>
+   <div class="tool-actions">
+    <button class="button secondary" type="button" data-tool-copy>Скопировать</button>
+    <button class="button secondary" type="button" data-tool-download>Скачать .txt</button>
+   </div>
+  </div>
+  <p class="tool-status" role="status"></p>
+ </form>
+</details></div>
+ <script id="digital-tools-catalog" type="application/json">{"minimum": 5000, "advanceTerms": "После согласования задачи работа начинается с аванса 5 000 ₽. Аванс входит в стоимость заказа.", "services": [{"id": "ai-agents", "name": "AI-агенты для контента", "price": "10 000 ₽", "unit": "разовое подключение", "amount": 10000, "monthly": false, "startingAt": false}, {"id": "setup", "name": "Настройка устройств", "price": "от 3 000 ₽", "unit": "за задачу · заказ от 5 000 ₽", "amount": 3000, "monthly": false, "startingAt": true}, {"id": "websites", "name": "Сайты с помощью AI", "price": "от 10 000 ₽", "unit": "за сайт-визитку", "amount": 10000, "monthly": false, "startingAt": true}, {"id": "telegram-bots", "name": "Telegram-бот и мини-приложение", "price": "от 10 000 ₽", "unit": "разовая базовая настройка", "amount": 10000, "monthly": false, "startingAt": true}, {"id": "automation", "name": "Автоматизация процессов", "price": "от 10 000 ₽", "unit": "за один сценарий", "amount": 10000, "monthly": false, "startingAt": true}, {"id": "ai-content", "name": "AI-изображения", "price": "1 000 ₽", "unit": "за изображение · заказ от 5 000 ₽", "amount": 1000, "monthly": false, "startingAt": false}, {"id": "social", "name": "Контент и соцсети", "price": "от 15 000 ₽", "unit": "в месяц · одна площадка", "amount": 15000, "monthly": true, "startingAt": true}, {"id": "ecosystem", "name": "Цифровая инфраструктура", "price": "от 30 000 ₽", "unit": "за базовый запуск", "amount": 30000, "monthly": false, "startingAt": true}, {"id": "identity", "name": "Идея, название и стиль", "price": "от 25 000 ₽", "unit": "за базовую концепцию", "amount": 25000, "monthly": false, "startingAt": true}, {"id": "personal-solutions", "name": "Индивидуальные решения и сопровождение", "price": "Индивидуальный расчёт", "unit": "после разбора задачи", "amount": null, "monthly": false, "startingAt": false}, {"id": "business-system", "name": "Комплексная настройка системы", "price": "от 10 000 ₽", "unit": "за первый этап настройки", "amount": 10000, "monthly": false, "startingAt": true}, {"id": "social-actions", "name": "Агент для действий в соцсетях", "price": "Индивидуальный расчёт", "unit": "по выбранному сценарию", "amount": null, "monthly": false, "startingAt": false}]}</script>
+</section><section id="local-activity" class="section" aria-labelledby="local-activity-title">
+ <div class="card"><h2 id="local-activity-title">Локальная статистика</h2>
+ <p>По желанию этот браузер может вести счётчики действий. Они доступны на этом устройстве и сохраняются без содержимого форм, запросов поиска и контактных данных.</p>
+ <div data-activity-panel hidden>
+  <label><input type="checkbox" id="activity-opt-in"> Сохранять счётчики в этом браузере</label>
+  <p>Историю можно очистить. Подтверждённые отправки в Битрикс24 сверяются по записям CRM.</p>
+  <ul id="activity-counters" class="library-list"></ul>
+  <div hidden><span data-activity-service-label="ai-agents">AI-агенты для контента</span><span data-activity-service-label="setup">Настройка устройств</span><span data-activity-service-label="websites">Сайты с помощью AI</span><span data-activity-service-label="telegram-bots">Telegram-бот и мини-приложение</span><span data-activity-service-label="automation">Автоматизация процессов</span><span data-activity-service-label="ai-content">AI-изображения</span><span data-activity-service-label="social">Контент и соцсети</span><span data-activity-service-label="ecosystem">Цифровая инфраструктура</span><span data-activity-service-label="identity">Идея, название и стиль</span><span data-activity-service-label="personal-solutions">Индивидуальные решения и сопровождение</span><span data-activity-service-label="business-system">Комплексная настройка системы</span><span data-activity-service-label="social-actions">Агент для действий в соцсетях</span></div>
+  <button class="button secondary" type="button" id="activity-clear">Очистить счётчики</button>
+  <p id="activity-status" role="status"></p>
+ </div>
+ </div>
+</section></main>
+ <footer class="footer">
+  <div class="footer-name">© Трофим Мокров</div>
+  <nav class="social-links" aria-label="Социальные сети"><a class="social-link" href="https://www.instagram.com/trofimmokrov/"><span class="social-icon"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 3h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4zM15.5 12a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0zM17.5 6.5h.01"/></svg></span>Instagram</a><a class="social-link" href="https://t.me/TrofimMokrov"><span class="social-icon"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M21 3 3 10.5l6.5 2.7L18 7l-6.5 8 6 5L21 3zM9.5 13.2l2 6 2.4-2.2"/></svg></span>Личный Telegram</a></nav>
+  <div class="footer-links"><a href="https://t.me/TrofimAI_bot?start=site">Бот для заявок <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 19 19 5M5 5h14v14"/></svg></a><a href="about.html">Обо мне</a><a href="updates.html">Обновления</a><a href="contact.html">Контакты</a><a href="contact.html#payment">Оплата</a><a href="tools.html#local-activity">Локальная статистика</a></div>
+ </footer>
+</div>
+
+</body></html>
