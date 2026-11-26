@@ -200,6 +200,15 @@ body=f'''
  </div>
  <div class="home-service-list">{other_services}</div>
 </section>
+<section class="section" aria-labelledby="estimate-title">
+ <div class="section-head"><h2 id="estimate-title">Предварительная стоимость проекта</h2><p>Выберите направление. Дополнительные работы согласуем отдельно.</p></div>
+ <div class="card"><label for="estimate-service">Направление</label>
+ <select id="estimate-service" style="display:block;width:100%;padding:12px;margin:12px 0;font:inherit">
+ {''.join(f'<option value="{e(s["price"],quote=True)}">{e(s["name"])} — {e(s["price"])}</option>' for s in services if s['id'] in ('websites','telegram-bots','automation','business-system','ecosystem','ai-agents'))}
+ </select><p>Ориентир: <strong id="estimate-result" aria-live="polite">10 000 ₽</strong></p>
+ <p>Не является окончательной сметой. Подписки и сторонние сервисы оплачиваются отдельно при необходимости.</p>
+ {form_action(p)}</div>
+</section>
 <section class="section home-projects" aria-labelledby="home-projects-title" data-reveal>
  <div class="section-head"><h2 id="home-projects-title">Избранные проекты</h2><a class="text-link action-link" href="portfolio.html">Все проекты ↗</a></div>
  <div class="project-showcase">
