@@ -4,16 +4,31 @@ import json
 import os
 import re
 from datetime import date
+from functools import cache
 from hashlib import sha256
 from html import escape as e
 from pathlib import Path
 from urllib.parse import quote, urlsplit
 from estimate import estimate_section, request_estimate
+from digital_tools import digital_tools
+from project_builder import project_builder
+from v5_cases import case_pages, ecosystem_page, project_case_slug, telegram_case_slug
+from v5_design import bento, theme_bootstrap, theme_button
 ROOT=Path(__file__).resolve().parents[1]
 def read(path): return json.loads((ROOT/path).read_text())
 site=read('content/site.json'); services=read('content/services.json'); projects=read('content/projects.json')
 telegram_projects=read('content/telegram-projects.json')
 pilot=read('content/pilot.json')
+activity_service_ids=','.join(service['id'] for service in services)
+def published_url(url):
+ parsed=urlsplit(url)
+ if parsed.scheme!='https' or not parsed.hostname or parsed.username or parsed.password or any(char.isspace() for char in url):
+  raise ValueError('Published links must be HTTPS without embedded credentials or whitespace')
+for key in ('telegram','instagram','vk','bot_url'):
+ published_url(site[key])
+for item in (*projects,*telegram_projects):
+ for key in ('url','website'):
+  if item.get(key):published_url(item[key])
 articles=[json.loads(p.read_text()) for p in sorted((ROOT/'content/articles').glob('*.json'))]
 topics={
  'websites':'Сайты и интерфейсы',
@@ -28,10 +43,38 @@ original_categories={
  'Автоматизация':'automation', 'Стоимость':'automation', 'Инфраструктура':'practice',
 }
 topic_by_category={**original_categories,**{name:key for key,name in topics.items()}}
+clusters={
+ 'web-development':('websites','Веб-разработка'),
+ 'seo':('websites','SEO и продвижение'),
+ 'telegram-apps':('telegram','Боты и Telegram Mini Apps'),
+ 'crm':('crm','CRM и обработка заявок'),
+ 'ai-agents':('content','AI-агенты и контент'),
+ 'automation':('automation','Автоматизация бизнеса'),
+ 'supabase':('practice','Supabase'),
+ 'github':('practice','GitHub'),
+ 'vercel':('practice','Vercel'),
+ 'security':('practice','Информационная безопасность'),
+ 'digital-operations':('practice','Цифровая инфраструктура'),
+ 'analytics':('practice','Веб-аналитика'),
+}
+default_clusters=dict(zip(topics,('web-development','telegram-apps','crm','ai-agents','automation','digital-operations')))
+existing_clusters={
+ 'public-page-indexing-check':'seo','website-content-clusters':'seo','removed-urls-redirects-and-consolidation':'seo',
+ 'supabase-table-model-and-migrations':'supabase','supabase-row-level-authorization':'supabase',
+ 'github-pages-project-paths':'github','vercel-preview-production-checks':'vercel',
+ 'automation-private-logs':'security','service-account-handover':'security','content-simple-audit':'analytics',
+}
+article_clusters={}
+clustered={key:[] for key in clusters}
 by_topic={key:[] for key in topics}
 for article in articles:
- by_topic[topic_by_category[article['category']]].append(article)
-for group in by_topic.values():
+ slug=article['slug']
+ cluster=article.get('cluster',existing_clusters.get(slug,default_clusters[topic_by_category[article['category']]]))
+ if cluster not in clusters:raise ValueError(f'Unknown article cluster for {slug}')
+ article_clusters[slug]=cluster
+ clustered[cluster].append(article)
+ by_topic[clusters[cluster][0]].append(article)
+for group in (*by_topic.values(),*clustered.values()):
  group.sort(key=lambda article:article['title'].casefold().replace('ё','е'))
 articles_by_slug={article['slug']:article for article in articles}
 for article in articles:
@@ -72,7 +115,7 @@ def social_profile(key,label,symbol):
  return f'<a class="social-link" href="{e(url,quote=True)}"><span class="social-icon">{symbol}</span>{label}</a>'
 def social_links():
  return '<nav class="social-links" aria-label="Социальные сети">'+''.join(social_profile(*profile) for profile in SOCIAL_PROFILES)+'</nav>'
-NAV=[('index.html','Главная'),('about.html','Обо мне'),('services.html','Услуги и цены'),('portfolio.html','Портфолио'),('articles.html','Статьи'),('updates.html','Обновления'),('contact.html','Контакты')]
+NAV=[('index.html','Главная'),('services.html','Услуги'),('project.html','Конструктор'),('portfolio.html','Портфолио'),('articles.html','Статьи'),('tools.html','Инструменты'),('ecosystem.html','Экосистема'),('contact.html','Контакты')]
 BITRIX_SITE_WIDGET='''<script>
 (function (w, d, u) {
   var s = d.createElement('script');
@@ -87,9 +130,11 @@ def href(current,target):
  if current=='404.html' and base:return base+'/'+target
  return os.path.relpath(ROOT/target,(ROOT/current).parent).replace(os.sep,'/')
 def link(current,target):return e(href(current,target),quote=True)
+@cache
+def asset_version(target):
+ return sha256((ROOT/target).read_bytes()).hexdigest()[:12]
 def versioned_link(current,target):
- version=sha256((ROOT/target).read_bytes()).hexdigest()[:12]
- return f'{link(current,target)}?v={version}'
+ return f'{link(current,target)}?v={asset_version(target)}'
 def service_art(service_id):
  file=f'assets/service-art/{service_id}.svg'
  return f'<img class="service-art" src="{versioned_link("index.html",file)}" width="288" height="160" alt="" loading="lazy" decoding="async">'
@@ -136,10 +181,19 @@ def render(path,title,description,body,active=None,article=None):
   person.update({'@id':base+'/#trofim','url':base+'/'})
   if path=='index.html':
    graph.append({'@type':'WebSite','@id':base+'/#website','url':base+'/','name':site['name'],'inLanguage':'ru','publisher':{'@id':person['@id']}})
+  trail=None
   if article:
    graph.append({'@type':'Article','mainEntityOfPage':page_url,'url':page_url,'headline':article['title'],'description':description,
-    'author':{'@id':person['@id']},'inLanguage':'ru','articleSection':topics[topic_by_category[article['category']]],'image':[base+'/assets/share-card.png']})
+    'author':{'@id':person['@id']},'inLanguage':'ru','articleSection':clusters[article_clusters[article['slug']]][1],'image':[base+'/assets/share-card.png']})
    trail=[('Главная',base+'/'),('Статьи',base+'/articles.html'),(article['title'],page_url)]
+  elif path.startswith('cases/'):
+   graph.append({'@type':'CreativeWork','name':title,'description':description,'url':page_url,'inLanguage':'ru'})
+   trail=[('Главная',base+'/'),('Портфолио',base+'/portfolio.html'),(title,page_url)]
+  elif path=='articles.html':
+   graph.append({'@type':'CollectionPage','name':title,'url':page_url,'description':description,'inLanguage':'ru',
+    'hasPart':[{'@type':'WebPageElement','name':label,'url':page_url+'#cluster-'+slug}
+     for slug,(_,label) in clusters.items() if clustered[slug]]})
+  if trail:
    graph.append({'@type':'BreadcrumbList','itemListElement':[
     {'@type':'ListItem','position':i,'name':name,'item':url} for i,(name,url) in enumerate(trail,1)]})
  schema=json.dumps({'@context':'https://schema.org','@graph':graph},ensure_ascii=False).replace('<','\\u003c')
@@ -147,23 +201,34 @@ def render(path,title,description,body,active=None,article=None):
  if path in ('index.html','services.html','portfolio.html'):styles.append('assets/interactive-v4.css')
  if path in ('portfolio.html','articles.html'):styles.append('assets/v4-content.css')
  if path in ('index.html','contact.html'):styles.append('assets/estimate.css')
+ if path in ('ecosystem.html','portfolio.html') or path.startswith('cases/'):styles.append('assets/v5-cases.css')
+ if path=='tools.html':styles.append('assets/v5-tools.css')
+ if path=='project.html':styles.append('assets/v5-project.css')
+ styles.append('assets/ecosystem-v5.css')
  extra_styles=''.join(f'<link rel="stylesheet" href="{versioned_link(path,file)}">' for file in styles)
- scripts=[]
+ scripts=['assets/v5-theme.js']
  if path=='contact.html':scripts.append('assets/estimate.js')
  if path in ('portfolio.html','articles.html'):scripts.append('assets/v4-content.js')
+ if path=='ecosystem.html':scripts.append('assets/v5-cases.js')
+ if path=='project.html':scripts.append('assets/v5-project.js')
+ if path=='tools.html':scripts.append('assets/v5-tools.js')
  extra_scripts=''.join(f'<script src="{versioned_link(path,file)}" defer></script>' for file in scripts)
  robots='<meta name="robots" content="noindex,follow">' if path=='404.html' else ''
+ activity_page='article' if article else ('request' if path=='contact.html' else '')
+ # The tools and project draft stay local. The contact page retains the official embed.
+ widget='' if path in ('tools.html','project.html') else BITRIX_SITE_WIDGET
  for symbol,svg in ICONS.items():
   body=body.replace(symbol,svg)
   nav=nav.replace(symbol,svg)
  content=f'''<!doctype html>
-<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#f5f5ee"><title>{e(full_title)}</title><meta name="description" content="{e(description)}">{robots}<meta property="og:title" content="{e(full_title)}"><meta property="og:description" content="{e(description)}"><meta property="og:type" content="{'article' if article else 'website'}"><meta property="og:locale" content="ru_RU"><meta property="og:site_name" content="Трофим Мокров">{canonical}{ogimage}{font_preload}<link rel="icon" href="{link(path,'logo.svg')}" type="image/svg+xml"><link rel="stylesheet" href="{versioned_link(path,'assets/styles.css')}">{extra_styles}<script>document.documentElement.classList.add('js');</script><script src="{versioned_link(path,'assets/main.js')}" defer></script>{extra_scripts}<script type="application/ld+json">{schema}</script></head>
-<body><a class="skip" href="#main">К содержанию</a>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#f5f5ee">{theme_bootstrap()}<title>{e(full_title)}</title><meta name="description" content="{e(description)}">{robots}<meta property="og:title" content="{e(full_title)}"><meta property="og:description" content="{e(description)}"><meta property="og:type" content="{'article' if article else 'website'}"><meta property="og:locale" content="ru_RU"><meta property="og:site_name" content="Трофим Мокров">{canonical}{ogimage}{font_preload}<link rel="icon" href="{link(path,'logo.svg')}" type="image/svg+xml"><link rel="stylesheet" href="{versioned_link(path,'assets/styles.css')}">{extra_styles}<script>document.documentElement.classList.add('js');</script><script src="{versioned_link(path,'assets/main.js')}" defer></script>{extra_scripts}<script type="application/ld+json">{schema}</script></head>
+<body data-activity-script="{versioned_link(path,'assets/v5-activity.js')}" data-activity-page="{activity_page}" data-activity-services="{e(activity_service_ids)}"><a class="skip" href="#main">К содержанию</a>
 <div class="wrap">
  <header class="site-header">
   <a class="brand" href="{link(path,'index.html')}"><img src="{link(path,'logo.svg')}" width="36" height="36" alt=""><span>{e(site['name'])}</span></a>
   <div class="header-actions">
    <a class="header-telegram" href="{bot_link()}" aria-label="Открыть Telegram-бота">{TELEGRAM_ICON}Telegram</a>
+   {theme_button().strip()}
    <button class="menu-button" type="button" aria-controls="main-nav" aria-expanded="false" aria-label="Меню"><span class="menu-open-icon" aria-hidden="true">{MENU_ICON}</span><span class="menu-close-icon" aria-hidden="true">{MENU_CLOSE_ICON}</span></button>
   </div>
   <nav id="main-nav" aria-label="Основная навигация">{nav}</nav>
@@ -172,10 +237,10 @@ def render(path,title,description,body,active=None,article=None):
  <footer class="footer">
   <div class="footer-name">© {e(site['name'])}</div>
   {social_links()}
-  <div class="footer-links"><a href="{bot_link()}">Бот для заявок {ICONS['↗']}</a><a href="{link(path,'contact.html')}">Контакты</a><a href="{link(path,'contact.html')}#payment">Оплата</a></div>
+  <div class="footer-links"><a href="{bot_link()}">Бот для заявок {ICONS['↗']}</a><a href="{link(path,'about.html')}">Обо мне</a><a href="{link(path,'updates.html')}">Обновления</a><a href="{link(path,'contact.html')}">Контакты</a><a href="{link(path,'contact.html')}#payment">Оплата</a><a href="{link(path,'tools.html')}#local-activity">Локальная статистика</a></div>
  </footer>
 </div>
-{BITRIX_SITE_WIDGET}
+{widget}
 </body></html>'''
  target=ROOT/path;target.parent.mkdir(parents=True,exist_ok=True);target.write_text(content+'\n');outputs.append(path)
 faqs=[('Можно сначала посмотреть, каким будет сайт?', 'Да. Сначала показываю предварительный вариант, чтобы вы могли оценить идею и подачу. После обсуждения согласуем дальнейшую доработку, стоимость и условия оплаты. Базовый сайт с помощью AI — от 10 000 ₽.'),('Можно дополнить сайт после запуска?', 'Да. Можно начать с небольшой версии, а затем добавлять услуги, статьи, проекты и страницы. Новые задачи и их стоимость согласуются отдельно.'),('Кто следит за системой после запуска?', 'При подключении проверяю согласованный сценарий и объясняю его работу. Дальнейшее наблюдение и изменения можно поручить мне отдельно: заранее согласуем график проверок, канал связи, сроки реакции и стоимость. Постоянная доступность и устранение любых технических проблем в разовое подключение не входят.'),('AI-агент публикует во всех соцсетях?', 'Подключаем согласованные площадки, где доступны необходимые интеграции. До оплаты проверяем возможности ваших аккаунтов и фиксируем состав. Обещать одинаковую работу во всех соцсетях без такой проверки было бы некорректно.'),('Что входит в подключение AI-агента за 10 000 ₽?', 'Подбор сценария, подключение согласованных аккаунтов, настройка стиля и расписания, тестовая публикация и объяснение работы. Подписки сервисов, нестандартная разработка и дальнейшее ведение оплачиваются отдельно.'),('Можно обратиться с личной задачей, без бизнеса?', 'Да. Можно обсудить настройку компьютера или приложений, личный сайт, AI-инструменты и контент для собственного проекта. Решение и объём подбираются индивидуально.'),('Можно начать с небольшой задачи?','Да. Можно настроить одно устройство, подготовить изображение или автоматизировать один понятный процесс. Состав небольшой задачи согласуем заранее.'),('Что нужно для расчёта стоимости?','Расскажите, чем занимаетесь, какой результат нужен и какими инструментами уже пользуетесь. Примеры и ссылки помогут точнее определить объём. Пароли и персональные данные в первом сообщении не нужны.'),('Что означает цена «от»?','Это стоимость базового объёма, описанного в услуге. Дополнительные страницы, сценарии, площадки и нестандартные интеграции оцениваются отдельно до начала работы.'),('Вы гарантируете рост продаж?','Нет. Я отвечаю за согласованный результат работы: сайт, контент, настройку или сценарий. Продажи зависят также от продукта, аудитории, рекламы и обработки обращений.'),('Что со сроками, правками и поддержкой?','Сроки, количество согласований и условия поддержки определяются для конкретной задачи до начала работы. Бессрочная поддержка и неограниченные правки в тарифы не входят.')]
@@ -190,7 +255,7 @@ p='index.html'
 services_by_id={service['id']:service for service in services}
 def home_service(service,featured=False):
  style=' home-service--featured' if featured else ''
- return f'''<a class="home-service{style}" href="services.html#{service['id']}">
+ return f'''<a class="home-service{style}" href="services.html#{service['id']}" data-activity-service="{service['id']}">
  <span class="home-service-icon" aria-hidden="true">{e(service['icon'])}</span>
  <h3>{e(service['name'])}</h3>
  <p class="home-service-summary">{e(service['summary'])}</p>
@@ -238,7 +303,7 @@ body=f'''
  </div>
  <div class="home-service-list">{other_services}</div>
 </section>
-{estimate_section(services,site['advance_terms'],versioned_link(p,'assets/estimate.js'))}
+{bento(p)}
 <section class="section home-projects" aria-labelledby="home-projects-title" data-reveal>
  <div class="section-head"><h2 id="home-projects-title">Избранные проекты</h2><a class="text-link action-link" href="portfolio.html">Все проекты ↗</a></div>
  <div class="project-showcase">
@@ -265,6 +330,7 @@ body=f'''
  </div>
  <a class="button secondary" href="articles.html">В библиотеку ↗</a>
 </section>
+{estimate_section(services,site['advance_terms'],versioned_link(p,'assets/estimate.js'))}
 '''
 body+=faq_section(faqs[:2]+[faqs[-3],faqs[-1]])+contact(p)
 render(p,'Сайты, Telegram и автоматизация','Трофим Мокров: создание сайтов и Telegram-ботов, настройка Битрикс24 и AI-инструментов для бизнеса.',body)
@@ -277,7 +343,7 @@ render(p,'Обо мне','Трофим Мокров: подход к созда�
 # Services
 p='services.html';body=heading('Услуги и цены','Понятный объём.<br>Понятная стоимость.','Сайты, Telegram, автоматизация и настройка цифровых инструментов для бизнеса и личных задач.')
 body+=f'<p class="advance-note" id="work-terms">{e(site["advance_terms"])} Небольшие задачи можно объединить в заказ на сумму от 5 000 ₽.</p>'
-body+='<nav class="service-index" aria-label="Список услуг">'+''.join(f'<a href="#{s["id"]}">{e(s["name"])}</a>' for s in services)+'</nav>'
+body+='<nav class="service-index" aria-label="Список услуг">'+''.join(f'<a href="#{s["id"]}" data-activity-service="{s["id"]}">{e(s["name"])}</a>' for s in services)+'</nav>'
 for s in services:
  inc=''.join(f'<li>{e(item)}</li>' for item in s['includes'])
  body+=f'''<section class="service-detail" id="{s['id']}" data-reveal><div class="detail-top"><div><h2>{e(s['name'])}</h2><p>{e(s['audience'])}</p></div><div class="price">{e(s['price'])}<small>{e(s['unit'])}</small></div>{service_art(s['id'])}</div><div class="detail-body"><div><h3>Что входит</h3><ul>{inc}</ul><h3>Что получите</h3><p>{e(s['result'])}</p></div><div><h3>Что увеличивает стоимость</h3><p>{e(s['extra'])}</p><h3>Отдельные расходы</h3><p>{e(s['separate'])}</p><div class="actions">{telegram_action(s['id'])}<a class="text-link action-link" href="{e(site['telegram'])}">Написать лично ↗</a></div></div></div></section>'''
@@ -312,6 +378,7 @@ for project in telegram_projects:
  body+=f'''<article class="bot-project" id="{e(bot_project_anchor(project),quote=True)}" data-project-card data-reveal>
  <h3>{e(project['name'])}</h3>
  <p>{e(project['description'])}</p>{website}
+ <a class="text-link case-page-link" href="{link(p,'cases/'+telegram_case_slug(project)+'.html')}">Читать кейс ↗</a>
  <a class="bot-project-link" href="{e(bot_profile,quote=True)}" target="_blank" rel="noopener noreferrer">
   {TELEGRAM_ICON}<span><strong>Открыть в Telegram</strong><small>@{e(handle)}</small></span><span class="bot-project-arrow" aria-hidden="true">↗</span>
  </a>
@@ -330,7 +397,8 @@ for category,label in [('websites','Сайты'),('content','Площадки и
    body+='</figure>'
   body+=f'''<div class="work-case-body">
  <span class="work-case-label">{e(item['kind'])}</span>
- <h3>{e(item['title'])}</h3><p>{e(item['description'])}</p>'''
+ <h3>{e(item['title'])}</h3><p>{e(item['description'])}</p>
+ <a class="text-link case-page-link" href="{link(p,'cases/'+project_case_slug(item)+'.html')}">Читать кейс ↗</a>'''
   if item.get('diagram'):
    body+='<div class="dark case-map"><div class="eyebrow">Направления работы в проекте</div><div class="flow"><span>Оформление площадок</span><b aria-hidden="true">↔</b><span>Посты и публикации</span><b aria-hidden="true">↔</b><span>Сайт и инструменты</span></div><p>Схема участия автора в проекте. Коммерческие результаты здесь не оценивались.</p></div>'
   if item.get('url'):
@@ -344,6 +412,33 @@ for category,label in [('websites','Сайты'),('content','Площадки и
  body+='</div></section>'
 body+='</div>'+contact(p)
 render(p,'Портфолио','Проекты Трофима Мокрова. Сайты, Telegram-боты и мини-приложения, цифровые площадки и контент.',body)
+for slug,title,description,body in case_pages(projects,telegram_projects):
+ if not re.fullmatch('[a-z0-9-]+',slug):raise ValueError('Invalid portfolio case identifier')
+ render('cases/'+slug+'.html',title,description,body,active='portfolio.html')
+# Project planner and local utilities
+p='project.html'
+description='Выберите услуги, функции, бюджет и сроки. Получите предварительный расчёт и готовое техническое задание для заявки.'
+render(p,'Конструктор проекта',description,project_builder(services,site['advance_terms']))
+p='tools.html'
+description='Бесплатные инструменты для цифрового проекта. Брифы, контент-план, бюджет, чек-листы, SEO, UTM и ссылки для Telegram.'
+activity_labels=''.join(f'<span data-activity-service-label="{service["id"]}">{e(service["name"])}</span>' for service in services)
+activity_panel=f'''<section id="local-activity" class="section" aria-labelledby="local-activity-title">
+ <div class="card"><h2 id="local-activity-title">Локальная статистика</h2>
+ <p>По желанию этот браузер может вести счётчики действий. Они доступны на этом устройстве и сохраняются без содержимого форм, запросов поиска и контактных данных.</p>
+ <div data-activity-panel hidden>
+  <label><input type="checkbox" id="activity-opt-in"> Сохранять счётчики в этом браузере</label>
+  <p>Историю можно очистить. Подтверждённые отправки в Битрикс24 сверяются по записям CRM.</p>
+  <ul id="activity-counters" class="library-list"></ul>
+  <div hidden>{activity_labels}</div>
+  <button class="button secondary" type="button" id="activity-clear">Очистить счётчики</button>
+  <p id="activity-status" role="status"></p>
+ </div>
+ </div>
+</section>'''
+render(p,'Бесплатные цифровые инструменты',description,heading('Инструменты','Бесплатные цифровые инструменты',description)+digital_tools(services,site['advance_terms'])+activity_panel)
+p='ecosystem.html'
+description='Как сайты, Telegram, Битрикс24, AI и автоматизация связываются в рабочую систему. Сценарии с GitHub, Supabase и Vercel.'
+render(p,'Цифровая экосистема',description,ecosystem_page())
 # Articles
 p='articles.html'
 library_description=f'{article_count(len(articles))} о сайтах, SEO, Telegram, Битрикс24, Supabase, AI и автоматизации.'
@@ -364,42 +459,50 @@ body=f'''
 for key,name in topics.items():
  if by_topic[key]:
   body+=f'<a href="#topic-{key}"><span>{e(name)}</span><small>{article_count(len(by_topic[key]))}</small></a>'
-body+='</nav></div><div class="library-results">'
+body+='</nav><details class="library-clusters"><summary>Тематические кластеры</summary><ul>'
+for slug,(_,label) in clusters.items():
+ if clustered[slug]:body+=f'<li><a href="#cluster-{slug}">{e(label)}</a></li>'
+body+='</ul></details></div><div class="library-results">'
 body+='<p class="library-empty" hidden>Попробуйте другие слова или более короткий запрос.</p>'
 for key,name in topics.items():
  if not by_topic[key]:
   continue
  keywords={'crm':'Bitrix24 CRM','telegram':'Телеграм Mini App'}.get(key,'')
- body+=f'<section class="library-topic" id="topic-{key}" aria-labelledby="topic-{key}-title" data-library-keywords="{e(keywords)}"><h2 id="topic-{key}-title">{e(name)}</h2><ul class="library-list">'
- for article in by_topic[key]:
-  body+=f'''<li data-library-result>
+ body+=f'<section class="library-topic" id="topic-{key}" aria-labelledby="topic-{key}-title" data-library-keywords="{e(keywords)}"><h2 id="topic-{key}-title">{e(name)}</h2>'
+ for slug,(topic,label) in clusters.items():
+  if topic!=key or not clustered[slug]:continue
+  body+=f'<div class="library-group" id="cluster-{slug}"><h3>{e(label)}</h3><ul class="library-list">'
+  for article in clustered[slug]:
+   body+=f'''<li data-library-result>
  <a class="library-row" href="{link(p,article_path(article))}">
-  <div><h3>{e(article['title'])}</h3><p>{e(article['description'])}</p></div>
+  <div><h4 data-library-title>{e(article['title'])}</h4><p>{e(article['description'])}</p></div>
   <span class="library-arrow" aria-hidden="true">↗</span>
  </a>
 </li>'''
- body+='</ul></section>'
+  body+='</ul></div>'
+ body+='</section>'
 body+='</div></div>'+contact(p)
 render(p,'Практическая библиотека',library_description,body)
 for a in articles:
- key=topic_by_category[a['category']]
+ cluster=article_clusters[a['slug']]
+ key,cluster_title=clusters[cluster]
  p=article_path(a)
  library_link=link(p,'articles.html')
- body=f'<div class="breadcrumbs"><a href="{library_link}">Библиотека</a> / <a href="{library_link}#topic-{key}">{e(topics[key])}</a></div><section class="page-heading"><h1>{e(a["title"])}</h1><p class="lead">{e(a["description"])}</p></section>'
+ body=f'<nav class="breadcrumbs" aria-label="Хлебные крошки"><a href="{link(p,"index.html")}">Главная</a> / <a href="{library_link}">Статьи</a> / <a href="{library_link}#cluster-{cluster}">{e(cluster_title)}</a></nav><section class="page-heading"><h1>{e(a["title"])}</h1><p class="lead">{e(a["description"])}</p></section>'
  body+='<article class="reading"><nav class="article-toc" aria-label="Содержание статьи"><div><strong>В этой статье</strong><ol>'
  for i,s in enumerate(a['sections'],1):body+=f'<li><a href="#part-{i}">{e(s["heading"])}</a></li>'
  body+='</ol></div></nav>'
  for i,s in enumerate(a['sections'],1):body+=f'<section id="part-{i}"><h2>{e(s["heading"])}</h2><p>{e(s["text"])}</p></section>'
  body+=f'<a class="text-link" href="{link(p,"services.html")}#{e(a["service"])}">Услуга по этой теме ↗</a></article>'
- siblings=by_topic[key]
- position=siblings.index(a)
- preferred=[articles_by_slug[slug] for slug in a.get('related',[])]
- related=(preferred+[item for item in siblings[position+1:]+siblings[:position] if item not in preferred])[:3]
+ preferred=a.get('related',[])
+ incoming=[item['slug'] for item in articles if a['slug'] in item.get('related',[]) and article_clusters[item['slug']]==cluster]
+ fallback=[item['slug'] for item in (*clustered[cluster],*by_topic[key]) if item is not a]
+ related=[articles_by_slug[slug] for slug in list(dict.fromkeys((*preferred,*incoming,*fallback)))[:3]]
  if related:
   body+='<nav class="related-reading" aria-labelledby="related-title"><h2 id="related-title">По этой теме</h2><ul class="library-list">'
   for item in related:
    body+=f'<li><a class="library-row" href="{link(p,article_path(item))}"><span>{e(item["title"])}</span><span class="library-arrow" aria-hidden="true">↗</span></a></li>'
-  body+=f'</ul><a class="text-link" href="{library_link}#topic-{key}">Все статьи по теме ↗</a></nav>'
+  body+=f'</ul><a class="text-link" href="{library_link}#cluster-{cluster}">Все статьи по теме ↗</a></nav>'
  render(p,a['title'],a['description'],body,active='articles.html',article=a)
 # Contact
 p='contact.html';body=heading('Контакты','Обсудим вашу задачу','Оставьте заявку на сайте или напишите мне напрямую.')

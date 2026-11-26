@@ -1,0 +1,135 @@
+.eco-heading,.case-heading {padding-bottom:clamp(22px,4vw,45px)}
+.eco-heading .lead,.case-heading .lead {margin-bottom:0}
+.eco-layout {display:grid;gap:18px}
+.eco-map {
+  min-width:0;
+  padding:clamp(18px,3.6vw,40px);
+  border:1px solid #354c3d;
+  border-radius:20px;
+  background:linear-gradient(145deg,#293c2d,#13231c 72%);
+  color:#f7f8ef;
+}
+.eco-map h2 {margin:0 0 12px;font-size:clamp(25px,3vw,35px)}
+.eco-legend {
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 15px;
+  margin:0 0 14px;
+  padding:0;
+  list-style:none;
+  color:#d2ddd0;
+  font-size:13px;
+}
+.eco-legend li {display:flex;align-items:center;gap:6px;padding:0}
+.eco-key,.eco-node::before {
+  content:"";
+  display:block;
+  width:8px;
+  height:8px;
+  flex:none;
+  border:1px solid #a8b8a9;
+  border-radius:50%;
+}
+.eco-key--current,.eco-node[data-eco-state="current"]::before {
+  border-color:#d3ee9d;
+  background:#d3ee9d;
+}
+.eco-stage {
+  padding:14px 0;
+  border-top:1px solid #baccab39;
+}
+.eco-stage:last-child {padding-bottom:0}
+.eco-stage h3 {margin:0 0 8px;color:#d2ddd0;font-size:14px}
+.eco-buttons {display:flex;flex-wrap:wrap;gap:7px}
+.eco-node {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  min-height:44px;
+  padding:8px 11px;
+  border:1px solid #a9baa264;
+  border-radius:9px;
+  background:#edf5e011;
+  color:#f7f8ef;
+  font-size:14px;
+  line-height:1.25;
+  text-align:left;
+  cursor:pointer;
+}
+.eco-node:hover {background:#edf5e022}
+.eco-node[aria-pressed="true"] {background:#d6efae;color:#13231c;border-color:#d6efae}
+.eco-node[aria-pressed="true"]::before {border-color:#375041}
+.eco-node[aria-pressed="true"][data-eco-state="current"]::before {background:#375041}
+.eco-node:focus-visible {outline-color:#d6efae}
+.eco-panels,.eco-examples-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:12px}
+.eco-panel,.eco-examples-grid article {
+  min-width:0;
+  padding:clamp(18px,3.3vw,32px);
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:var(--white);
+  overflow-wrap:anywhere;
+}
+.eco-panel h2 {margin:0 0 12px;font-size:clamp(24px,3.3vw,38px)}
+.eco-panel p:not(.eco-panel-status),.eco-examples-grid article p {color:var(--muted)}
+.eco-panel-status {
+  display:inline-block;
+  margin:0 0 12px;
+  padding:3px 9px;
+  border:1px solid var(--line);
+  border-radius:7px;
+  color:var(--muted);
+  font-size:12px;
+  font-weight:700;
+}
+.eco-panel-status--current {border-color:var(--accent-soft);background:var(--accent-soft);color:var(--accent)}
+.eco-interactive .eco-panels {grid-template-columns:minmax(0,1fr)}
+.eco-examples {padding-block:clamp(30px,5vw,68px)}
+.eco-examples h3 {margin:0 0 10px;font-size:clamp(19px,2.5vw,24px)}
+.case-heading h1 {overflow-wrap:anywhere}
+.case-kind {display:block;margin:0 0 10px;color:var(--muted);font-size:14px;font-weight:700}
+.case-actions {display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+.case-media {
+  max-width:950px;
+  margin:0 auto clamp(22px,5vw,52px);
+  overflow:hidden;
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:var(--white);
+}
+.case-media img {width:100%;height:auto}
+.case-layout {display:grid;gap:20px clamp(18px,4vw,60px)}
+.case-index {
+  align-self:start;
+  padding:15px;
+  border:1px solid var(--line);
+  border-radius:13px;
+  background:var(--tint);
+}
+.case-index h2 {margin:0 0 8px;font-size:20px}
+.case-index ol,.case-route {margin:0;padding-left:22px}
+.case-index a {display:block;padding-block:6px;color:var(--accent);font-size:14px}
+.case-index a:hover {text-decoration:underline;text-underline-offset:4px}
+.case-sections {min-width:0}
+.case-section {
+  padding:14px 0 clamp(18px,4vw,34px);
+  border-bottom:1px solid var(--line);
+}
+.case-section h2 {margin:0 0 10px;font-size:clamp(23px,3.3vw,35px)}
+.case-section p,.case-route {color:var(--muted)}
+.case-route {display:grid;gap:8px}
+.case-route li::marker {color:var(--accent);font-weight:700}
+.case-footer {
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px 20px;
+  margin:24px 0 clamp(30px,6vw,76px);
+}
+@media (min-width:780px) {
+  .eco-layout.eco-interactive {grid-template-columns:minmax(0,1.4fr) minmax(250px,1fr);align-items:start}
+  .case-layout {grid-template-columns:minmax(155px,235px) minmax(0,1fr)}
+}
+@media (max-width:450px) {
+  .case-actions {display:grid;grid-template-columns:minmax(0,1fr)}
+}

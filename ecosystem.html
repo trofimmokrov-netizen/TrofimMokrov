@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#f5f5ee"><script>
+(() => {
+  const key = 'trofim-site-theme';
+  let mode = 'auto';
+  for (const name of ['sessionStorage', 'localStorage']) {
+    try {
+      const value = window[name].getItem(key);
+      if (value === 'auto' || value === 'light' || value === 'dark') { mode = value; break; }
+    } catch {}
+  }
+  const dark = mode === 'dark' || (mode === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  document.documentElement.dataset.themeMode = mode;
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#101b15' : '#f4f5ee');
+})();
+</script><title>Цифровая экосистема — Трофим Мокров</title><meta name="description" content="Как сайты, Telegram, Битрикс24, AI и автоматизация связываются в рабочую систему. Сценарии с GitHub, Supabase и Vercel."><meta property="og:title" content="Цифровая экосистема — Трофим Мокров"><meta property="og:description" content="Как сайты, Telegram, Битрикс24, AI и автоматизация связываются в рабочую систему. Сценарии с GitHub, Supabase и Vercel."><meta property="og:type" content="website"><meta property="og:locale" content="ru_RU"><meta property="og:site_name" content="Трофим Мокров"><link rel="canonical" href="https://trofimmokrov-netizen.github.io/TrofimMokrov/ecosystem.html">
+<meta property="og:url" content="https://trofimmokrov-netizen.github.io/TrofimMokrov/ecosystem.html"><meta property="og:image" content="https://trofimmokrov-netizen.github.io/TrofimMokrov/assets/share-card.png"><meta property="og:image:secure_url" content="https://trofimmokrov-netizen.github.io/TrofimMokrov/assets/share-card.png"><meta property="og:image:type" content="image/png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Трофим Мокров — сайты, AI и автоматизация"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://trofimmokrov-netizen.github.io/TrofimMokrov/assets/share-card.png"><link rel="icon" href="logo.svg" type="image/svg+xml"><link rel="stylesheet" href="assets/styles.css?v=9c4fcc579f96"><link rel="stylesheet" href="assets/v5-cases.css?v=2c0d8cd264e9"><link rel="stylesheet" href="assets/ecosystem-v5.css?v=5e54622ceea7"><script>document.documentElement.classList.add('js');</script><script src="assets/main.js?v=7b0ca70626c6" defer></script><script src="assets/v5-theme.js?v=4517af3deb4e" defer></script><script src="assets/v5-cases.js?v=6f1d026e1e14" defer></script><script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "Person", "name": "Трофим Мокров", "email": "trofimmokrov@gmail.com", "telephone": "+79159982554", "sameAs": ["https://t.me/TrofimMokrov", "https://www.instagram.com/trofimmokrov/", "https://vk.com/trofimmokrov"], "@id": "https://trofimmokrov-netizen.github.io/TrofimMokrov/#trofim", "url": "https://trofimmokrov-netizen.github.io/TrofimMokrov/"}]}</script></head>
+<body data-activity-script="assets/v5-activity.js?v=b87726ee5dbb" data-activity-page="" data-activity-services="ai-agents,setup,websites,telegram-bots,automation,ai-content,social,ecosystem,identity,personal-solutions,business-system,social-actions"><a class="skip" href="#main">К содержанию</a>
+<div class="wrap">
+ <header class="site-header">
+  <a class="brand" href="index.html"><img src="logo.svg" width="36" height="36" alt=""><span>Трофим Мокров</span></a>
+  <div class="header-actions">
+   <a class="header-telegram" href="https://t.me/TrofimAI_bot?start=site" aria-label="Открыть Telegram-бота"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M21 3 3 10.5l6.5 2.7L18 7l-6.5 8 6 5L21 3zM9.5 13.2l2 6 2.4-2.2"/></svg>Telegram</a>
+   <div class="theme-control" hidden>
+  <button type="button" class="theme-toggle" aria-label="Оформление сайта" title="Оформление сайта"
+    aria-expanded="false" aria-controls="v5-theme-options"><svg class="theme-sun" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10zM12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="theme-moon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M20.5 14.5A8.8 8.8 0 0 1 9.5 3.5a8.9 8.9 0 1 0 11 11z"/></svg></button>
+  <div class="theme-options" id="v5-theme-options" hidden>
+    <fieldset>
+      <legend>Тема оформления</legend>
+      <label><input type="radio" name="v5-site-theme" value="auto" checked>Как в системе</label>
+      <label><input type="radio" name="v5-site-theme" value="light">Светлая</label>
+      <label><input type="radio" name="v5-site-theme" value="dark">Тёмная</label>
+    </fieldset>
+  </div>
+</div>
+   <button class="menu-button" type="button" aria-controls="main-nav" aria-expanded="false" aria-label="Меню"><span class="menu-open-icon" aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="menu-close-icon" aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"/></svg></span></button>
+  </div>
+  <nav id="main-nav" aria-label="Основная навигация"><a href="index.html">Главная</a><a href="services.html">Услуги</a><a href="project.html">Конструктор</a><a href="portfolio.html">Портфолио</a><a href="articles.html">Статьи</a><a href="tools.html">Инструменты</a><a href="ecosystem.html" aria-current="page">Экосистема</a><a href="contact.html">Контакты</a><a href="https://t.me/TrofimAI_bot?start=app">Мини-приложение <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 19 19 5M5 5h14v14"/></svg></a></nav>
+ </header>
+ <main id="main"><section class="page-heading eco-heading">
+ <h1>Цифровая экосистема</h1>
+ <p class="lead">Путь от первого знакомства с услугой до заявки. Посмотрите, какие инструменты уже использует этот сайт и что можно подключить под задачу.</p>
+</section>
+<div class="eco-layout" data-eco>
+ <section class="eco-map" data-eco-controls aria-labelledby="eco-map-title" hidden>
+  <h2 id="eco-map-title">Карта инструментов</h2>
+  <ul class="eco-legend">
+   <li><span class="eco-key eco-key--current" aria-hidden="true"></span>В текущем сайте</li>
+   <li><span class="eco-key" aria-hidden="true"></span>По задаче проекта</li>
+  </ul>
+  <div class="eco-stages"><div class="eco-stage">
+ <h3>Что видит посетитель</h3>
+ <div class="eco-buttons" role="group" aria-label="Что видит посетитель"><button type="button" class="eco-node" data-eco-node="sites" data-eco-state="current"
+ aria-controls="eco-sites" aria-pressed="false">Сайты</button><button type="button" class="eco-node" data-eco-node="telegram" data-eco-state="current"
+ aria-controls="eco-telegram" aria-pressed="false">Telegram</button><button type="button" class="eco-node" data-eco-node="mini-apps" data-eco-state="current"
+ aria-controls="eco-mini-apps" aria-pressed="false">Mini Apps</button></div>
+</div><div class="eco-stage">
+ <h3>Как обрабатываются заявки</h3>
+ <div class="eco-buttons" role="group" aria-label="Как обрабатываются заявки"><button type="button" class="eco-node" data-eco-node="bitrix24" data-eco-state="current"
+ aria-controls="eco-bitrix24" aria-pressed="false">Битрикс24</button><button type="button" class="eco-node" data-eco-node="crm" data-eco-state="option"
+ aria-controls="eco-crm" aria-pressed="false">CRM</button><button type="button" class="eco-node" data-eco-node="automation" data-eco-state="option"
+ aria-controls="eco-automation" aria-pressed="false">Автоматизация</button><button type="button" class="eco-node" data-eco-node="ai-agents" data-eco-state="option"
+ aria-controls="eco-ai-agents" aria-pressed="false">AI-агенты</button></div>
+</div><div class="eco-stage">
+ <h3>Где работает проект</h3>
+ <div class="eco-buttons" role="group" aria-label="Где работает проект"><button type="button" class="eco-node" data-eco-node="github" data-eco-state="current"
+ aria-controls="eco-github" aria-pressed="false">GitHub</button><button type="button" class="eco-node" data-eco-node="supabase" data-eco-state="option"
+ aria-controls="eco-supabase" aria-pressed="false">Supabase</button><button type="button" class="eco-node" data-eco-node="vercel" data-eco-state="option"
+ aria-controls="eco-vercel" aria-pressed="false">Vercel</button></div>
+</div></div>
+  <p class="sr-only" data-eco-status role="status"></p>
+ </section>
+ <div class="eco-panels" aria-label="Описание инструментов"><article class="eco-panel" id="eco-sites" data-eco-panel="sites">
+ <p class="eco-panel-status eco-panel-status--current">На этом сайте</p>
+ <h2>Сайты</h2><p>Страницы услуг, портфолио и библиотека помогают разобраться в предложении. На странице контактов размещена форма Битрикс24.</p>
+ <a class="text-link action-link" href="services.html">Услуги и цены <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 19 19 5M5 5h14v14"/></svg></a>
+</article><article class="eco-panel" id="eco-telegram" data-eco-panel="telegram">
+ <p class="eco-panel-status eco-panel-status--current">На этом сайте</p>
+ <h2>Telegram</h2><p>Сайт содержит ссылки на личный Telegram, бота TrofimAI и мини-приложения из портфолио. Бот и приложения открываются в клиенте Telegram.</p>
+ <a class="text-link action-link" href="portfolio.html#telegram-projects">Telegram-проекты <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 19 19 5M5 5h14v14"/></svg></a>
+</article><article class="eco-panel" id="eco-mini-apps" data-eco-panel="mini-apps">
+ <p class="eco-panel-status eco-panel-status--current">На этом сайте</p>
+ <h2>Mini Apps</h2><p>В TrofimAI внутри Telegram доступны каталог услуг и контакты. Форма заявки и виджет чата загружаются из Битрикс24.</p>
+ <a class="text-link action-link" href="https://t.me/TrofimAI_bot?start=app">Открыть TrofimAI <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 19 19 5M5 5h14v14"/></svg></a>
+</article><article class="eco-panel" id="eco-bitrix24" data-eco-panel="bitrix24">
+ <p class="eco-panel-status eco-panel-status--current">На этом сайте</p>
+ <h2>Битрикс24</h2><p>Контактная страница и Mini App используют встроенные форму и виджет Битрикс24. Поля, получатели и доступные каналы настраиваются в Битрикс24.</p>
+ <a class="text-link action-link" href="contact.html#request-form">Форма на сайте <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 19 19 5M5 5h14v14"/></svg></a>
+</article><article class="eco-panel" id="eco-crm" data-eco-panel="crm">
+ <p class="eco-panel-status eco-panel-status--option">Подключение по задаче</p>
+ <h2>CRM</h2><p>В клиентском проекте CRM может хранить обращения, назначать ответственных и показывать этапы работы. Настройку ведут от полей заявки и правил обработки.</p>
+ <a class="text-link action-link" href="articles.html#topic-crm">Статьи о заявках <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 19 19 5M5 5h14v14"/></svg></a>
+</article><article class="eco-panel" id="eco-automation" data-eco-panel="automation">
+ <p class="eco-panel-status eco-panel-status--option">Подключение по задаче</p>
+ <h2>Автоматизация</h2><p>Сценарий может передавать данные между сервисами, отправлять уведомление или запускать обработку по расписанию. Условия повторов и ручного восстановления согласуют заранее.</p>
+ <a class="text-link action-link" href="services.html#automation">Автоматизация процессов <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 19 19 5M5 5h14v14"/></svg></a>
+</article><article class="eco-panel" id="eco-ai-agents" data-eco-panel="ai-agents">
+ <p class="eco-panel-status eco-panel-status--option">Подключение по задаче</p>
+ <h2>AI-агенты</h2><p>Агент может подготовить черновик ответа или материалы для публикации. Объём доступа и действия для проверки человеком определяются задачей.</p>
+ <a class="text-link action-link" href="services.html#ai-agents">AI-агенты для контента <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 19 19 5M5 5h14v14"/></svg></a>
+</article><article class="eco-panel" id="eco-github" data-eco-panel="github">
+ <p class="eco-panel-status eco-panel-status--current">На этом сайте</p>
+ <h2>GitHub</h2><p>В GitHub хранятся исходники и история изменений. Статические файлы этого сайта публикуются через GitHub Pages.</p>
+ <a class="text-link action-link" href="cases/personal-site.html">Кейс этого сайта <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 19 19 5M5 5h14v14"/></svg></a>
+</article><article class="eco-panel" id="eco-supabase" data-eco-panel="supabase">
+ <p class="eco-panel-status eco-panel-status--option">Подключение по задаче</p>
+ <h2>Supabase</h2><p>Supabase можно использовать, когда приложению нужна база данных, учётные записи или правила доступа к записям. Необходимость этих функций определяет выбор платформы.</p>
+ <a class="text-link action-link" href="articles/supabase-table-model-and-migrations.html">Как спроектировать данные <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 19 19 5M5 5h14v14"/></svg></a>
+</article><article class="eco-panel" id="eco-vercel" data-eco-panel="vercel">
+ <p class="eco-panel-status eco-panel-status--option">Подключение по задаче</p>
+ <h2>Vercel</h2><p>Vercel можно рассмотреть для публикации сайта или размещения веб-приложения с серверными функциями. Требования к сборке, конфигурации и размещению уточняют по проекту.</p>
+ <a class="text-link action-link" href="articles/vercel-preview-production-checks.html">Как проверить публикацию <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 19 19 5M5 5h14v14"/></svg></a>
+</article></div>
+</div>
+<section class="section eco-examples" aria-labelledby="eco-examples-title">
+ <h2 id="eco-examples-title">Как это может работать</h2>
+ <div class="eco-examples-grid">
+  <article>
+   <h3>Посетитель оставляет заявку</h3>
+   <p>Читает условия на сайте и открывает форму Битрикс24. Поля и направление обращения выбирают при настройке формы.</p>
+   <a class="text-link action-link" href="contact.html#request-form">Открыть форму <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 19 19 5M5 5h14v14"/></svg></a>
+  </article>
+  <article>
+   <h3>Клиент выбирает в Telegram</h3>
+   <p>Знакомится с каталогом внутри мини-приложения, затем открывает предусмотренную форму или пишет мастеру.</p>
+   <a class="text-link action-link" href="portfolio.html#telegram-projects">Посмотреть проекты <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 19 19 5M5 5h14v14"/></svg></a>
+  </article>
+  <article>
+   <h3>Команда обрабатывает обращения</h3>
+   <p>Согласует этапы в CRM и правила уведомлений. При необходимости подключает автоматизацию отдельных действий.</p>
+   <a class="text-link action-link" href="services.html#business-system">Об услуге <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 19 19 5M5 5h14v14"/></svg></a>
+  </article>
+ </div>
+</section></main>
+ <footer class="footer">
+  <div class="footer-name">© Трофим Мокров</div>
+  <nav class="social-links" aria-label="Социальные сети"><a class="social-link" href="https://www.instagram.com/trofimmokrov/"><span class="social-icon"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 3h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4zM15.5 12a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0zM17.5 6.5h.01"/></svg></span>Instagram</a><a class="social-link" href="https://t.me/TrofimMokrov"><span class="social-icon"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M21 3 3 10.5l6.5 2.7L18 7l-6.5 8 6 5L21 3zM9.5 13.2l2 6 2.4-2.2"/></svg></span>Личный Telegram</a></nav>
+  <div class="footer-links"><a href="https://t.me/TrofimAI_bot?start=site">Бот для заявок <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 19 19 5M5 5h14v14"/></svg></a><a href="about.html">Обо мне</a><a href="updates.html">Обновления</a><a href="contact.html">Контакты</a><a href="contact.html#payment">Оплата</a><a href="tools.html#local-activity">Локальная статистика</a></div>
+ </footer>
+</div>
+<script>
+(function (w, d, u) {
+  var s = d.createElement('script');
+  s.async = true;
+  s.src = u + '?' + (Date.now() / 60000 | 0);
+  var h = d.getElementsByTagName('script')[0];
+  h.parentNode.insertBefore(s, h);
+})(window, document, 'https://cdn-ru.bitrix24.ru/b38606320/crm/site_button/loader_3_gbqxj4.js');
+</script>
+</body></html>

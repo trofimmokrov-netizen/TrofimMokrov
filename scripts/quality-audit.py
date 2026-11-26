@@ -10,7 +10,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 SITE = json.loads((ROOT / "content/site.json").read_text(encoding="utf-8"))
 BASE = SITE["base_url"].rstrip("/") + "/"
-PAGES = sorted(ROOT.glob("*.html")) + sorted((ROOT / "articles").glob("*.html"))
+PAGES = sorted([*ROOT.glob("*.html"), *(ROOT / "articles").glob("*.html"), *(ROOT / "cases").glob("*.html")])
 ISSUES = []
 
 class Scanner(HTMLParser):
@@ -27,12 +27,19 @@ class Scanner(HTMLParser):
         self.robots = []
         self.schema_scripts = []
         self.schema_text = None
+        self.main_text = []
+        self.inside_main = False
+        self.inside_script = False
         self.viewport = False
         self.lang = False
     def handle_starttag(self, tag, attrs):
         a = dict(attrs)
         if tag == "html":
             self.lang = bool(a.get("lang"))
+        if tag == "main":
+            self.inside_main = True
+        if tag in ("script", "style"):
+            self.inside_script = True
         if tag == "title":
             self.current_title = True
         if tag == "meta":
@@ -61,9 +68,15 @@ class Scanner(HTMLParser):
             self.title.append(data)
         if self.schema_text is not None:
             self.schema_text.append(data)
+        if self.inside_main and not self.inside_script:
+            self.main_text.append(data)
     def handle_endtag(self, tag):
         if tag == "title":
             self.current_title = False
+        if tag == "main":
+            self.inside_main = False
+        if tag in ("script", "style"):
+            self.inside_script = False
         if tag == "script" and self.schema_text is not None:
             self.schema_scripts.append("".join(self.schema_text))
             self.schema_text = None
@@ -71,6 +84,7 @@ class Scanner(HTMLParser):
 canonical_owners = {}
 title_owners = {}
 description_owners = {}
+body_owners = {}
 indexable = set()
 for path in PAGES:
     doc = Scanner()
@@ -86,7 +100,8 @@ for path in PAGES:
     if len(doc.descriptions) != 1 or not doc.descriptions[0]:
         ISSUES.append(f"{rel}: expected exactly one non-empty description")
     for label, value, owners in (("title", title, title_owners),
-                                  ("description", " ".join(doc.descriptions), description_owners)):
+                                  ("description", " ".join(doc.descriptions), description_owners),
+                                  ("main content", " ".join(" ".join(doc.main_text).split()), body_owners)):
         if value in owners:
             ISSUES.append(f"{rel}: duplicate {label} used by {owners[value]}")
         owners[value] = rel
@@ -108,17 +123,19 @@ for path in PAGES:
         "og:title", "og:description", "og:type", "og:image"
     )):
         ISSUES.append(f"{rel}: incomplete or inconsistent Open Graph metadata")
-    if rel.startswith("articles/"):
+    if rel.startswith(("articles/", "cases/")):
         try:
             nodes = [node for script in doc.schema_scripts for node in json.loads(script).get("@graph", [])]
-            article = next(node for node in nodes if node.get("@type") == "Article")
+            is_article = rel.startswith("articles/")
+            entry_type = "Article" if is_article else "CreativeWork"
+            entry = next(node for node in nodes if node.get("@type") == entry_type)
             trail = next(node for node in nodes if node.get("@type") == "BreadcrumbList")
-            if article.get("mainEntityOfPage") != wanted or trail["itemListElement"][-1]["item"] != wanted:
+            if entry.get("url") != wanted or trail["itemListElement"][-1]["item"] != wanted:
                 raise ValueError("structured data URL differs from canonical")
-            if not article.get("headline") or not article.get("author"):
+            if is_article and (not entry.get("headline") or not entry.get("author")):
                 raise ValueError("missing structured article headline or author")
         except (ValueError, TypeError, AttributeError, KeyError, IndexError, StopIteration):
-            ISSUES.append(f"{rel}: invalid Article or BreadcrumbList schema")
+            ISSUES.append(f"{rel}: invalid content or BreadcrumbList schema")
     for img in doc.images:
         if not img.get("alt") and "alt" not in img:
             ISSUES.append(f"{rel}: image has no alt attribute")

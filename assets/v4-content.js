@@ -56,6 +56,7 @@
   if (librarySearch) {
     const status = document.querySelector('#library-search-status');
     const index = document.querySelector('.library-index');
+    const clusters = document.querySelector('.library-clusters');
     const empty = document.querySelector('.library-empty');
     const results = document.querySelector('.library-results');
     const searchField = document.createElement('div');
@@ -87,13 +88,16 @@
     const topics = [...document.querySelectorAll('.library-topic')].map(section => {
       const key = section.id.replace(/^topic-/, '');
       const topicWords = wordsIn([section.querySelector('h2').textContent, section.dataset.libraryKeywords, aliases[key]].join(' '));
-      const list = section.querySelector('.library-list');
-      const entries = [...list.querySelectorAll('[data-library-result]')].map(element => ({
-        element,
-        title: wordsIn(element.querySelector('h3').textContent),
-        description: wordsIn(element.querySelector('p').textContent),
-      }));
-      return {section, list, entries, topicWords};
+      const groups = [...section.querySelectorAll('.library-group')].map(group => {
+        const list = group.querySelector('.library-list');
+        const entries = [...list.querySelectorAll('[data-library-result]')].map(element => ({
+          element,
+          title: wordsIn(element.querySelector('[data-library-title]').textContent),
+          description: wordsIn(element.querySelector('p').textContent),
+        }));
+        return {group, list, entries, groupWords: [...topicWords, ...wordsIn(group.querySelector('h3').textContent)]};
+      });
+      return {section, groups};
     });
 
     function scoreEntry(entry, topicWords, query) {
@@ -115,20 +119,27 @@
       if (queryKey === previousQuery) return;
       previousQuery = queryKey;
       let count = 0;
-      const rankedTopics = topics.map(({section, list, entries, topicWords}) => {
-        const ranked = entries.map(entry => ({entry, score: scoreEntry(entry, topicWords, query)}));
-        ranked.sort((left, right) => right.score - left.score);
-        for (const {entry, score} of ranked) {
-          entry.element.hidden = score < 0;
-          count += Number(score >= 0);
-        }
-        list.append(...ranked.map(({entry}) => entry.element));
-        section.hidden = ranked[0].score < 0;
-        return {section, score: ranked[0].score};
+      const rankedTopics = topics.map(({section, groups}) => {
+        const rankedGroups = groups.map(({group, list, entries, groupWords}) => {
+          const ranked = entries.map(entry => ({entry, score: scoreEntry(entry, groupWords, query)}));
+          ranked.sort((left, right) => right.score - left.score);
+          for (const {entry, score} of ranked) {
+            entry.element.hidden = score < 0;
+            count += Number(score >= 0);
+          }
+          list.append(...ranked.map(({entry}) => entry.element));
+          group.hidden = ranked[0].score < 0;
+          return {group, score: ranked[0].score};
+        });
+        rankedGroups.sort((left, right) => right.score - left.score);
+        section.append(...rankedGroups.map(({group}) => group));
+        section.hidden = rankedGroups[0].score < 0;
+        return {section, score: rankedGroups[0].score};
       });
       rankedTopics.sort((left, right) => right.score - left.score);
       results.append(...rankedTopics.map(({section}) => section));
       index.hidden = query.length > 0;
+      clusters.hidden = query.length > 0;
       empty.hidden = count > 0;
       status.textContent = query.length ? 'Найдено материалов: ' + count : '';
     };
