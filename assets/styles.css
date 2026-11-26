@@ -734,3 +734,16 @@ a:focus-visible,button:focus-visible,summary:focus-visible {outline-offset:4px}
   .hero-copy {padding:24px 18px 18px}
   .hero-actions .button {min-height:48px}
 }
+
+/* Digital experience v3: lightweight visual motion, no external assets. */
+.hero::before {background:radial-gradient(ellipse at 15% 10%,#334d8d88,transparent 58%),radial-gradient(ellipse at 85% 85%,#684b9c66,transparent 55%),linear-gradient(135deg,#101827,#20263d);background-size:130% 130%}
+.hero .eyebrow {color:#cbd8ff}
+.home-service--featured {background:radial-gradient(ellipse at 95% 5%,#dce6ff,transparent 70%),#fff}
+.home-service-icon,.project-cluster-icon {background:#e7edff;color:#344d91}
+.home-service {transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease}
+@media (hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference) {
+ .home-service:hover {transform:translateY(-3px);box-shadow:0 14px 32px #263c7318;border-color:#a8b8e2}
+ .hero::before {animation:digital-ambient 12s ease-in-out 2 alternate}
+}
+@keyframes digital-ambient {from{background-position:0% 0%}to{background-position:100% 100%}}
+@media(prefers-reduced-motion:reduce) {.hero::before{animation:none}.home-service{transition:none}}
