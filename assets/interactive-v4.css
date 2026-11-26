@@ -1,0 +1,248 @@
+/* The project photography and the service illustrations share the same neutral palette. */
+:root {
+  --paper: #f4f5ee;
+  --ink: #182820;
+  --muted: #4b5b4e;
+  --accent: #274b36;
+  --accent-hover: #183a28;
+  --accent-soft: #e4ebd8;
+  --tint: #eef1e5;
+  --line: #d2dbcc;
+  --white: #fcfdf8;
+  --radius: 19px;
+}
+
+.hero,
+.contact-banner {
+  --panel-text: #f4f8ef;
+  --panel-muted: #d3dfd4;
+  --panel-accent: #d6ef99;
+  border-color: #36513e;
+  background: #14241b;
+  color: var(--panel-text);
+}
+
+.hero {
+  grid-template-columns: minmax(0, 1.18fr) minmax(220px, .82fr);
+  border-radius: clamp(19px, 3.1vw, 36px);
+  box-shadow: 0 20px 48px #152a1c26;
+}
+
+.hero::before {
+  inset: -12%;
+  background:
+    radial-gradient(ellipse at 30% 9%, #56794c60, transparent 53%),
+    radial-gradient(ellipse at 93% 78%, #315a44a6, transparent 55%),
+    linear-gradient(128deg, #111f17 19%, #203a2b 69%, #18281f);
+  background-size: auto;
+  animation: none;
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(90deg, #e6f6de12 0 1px, transparent 1px 68px);
+  mask-image: linear-gradient(112deg, transparent 24%, #000 73%);
+}
+
+.hero-copy {
+  padding: clamp(28px, 4.65vw, 68px);
+}
+
+.hero .eyebrow {color: #dcebbf}
+.hero h1 {letter-spacing: -.056em}
+
+.hero-portrait {
+  margin: clamp(10px, 1.45vw, 21px);
+  margin-inline-start: 0;
+  border: 1px solid #c5dfc850;
+  border-radius: clamp(13px, 1.95vw, 24px);
+  background: #284134;
+  box-shadow: 0 10px 25px #0a181e34;
+}
+
+.hero-portrait::after {
+  background: linear-gradient(118deg, #0a171e30, transparent 44%, #101f1830);
+}
+
+:is(.hero, .contact-banner) .form-action {
+  border-color: var(--panel-accent);
+  background: var(--panel-accent);
+  color: #20321d;
+}
+
+:is(.hero, .contact-banner) .form-action:hover {
+  border-color: #e4f5bc;
+  background: #e4f5bc;
+}
+
+:is(.hero, .contact-banner) .telegram-action {
+  border-color: #b3cbb581;
+  background: #f8fff314;
+}
+
+:is(.hero, .contact-banner) .telegram-action:hover {
+  border-color: #d6ead3;
+  background: #f8fff324;
+}
+
+.home-service,
+.home-service--featured,
+.service-detail,
+.bot-project,
+.project-cluster {
+  border-color: var(--line);
+  border-radius: var(--radius);
+  background: var(--white);
+}
+
+.home-service {
+  box-shadow: 0 7px 18px #1f3f2810;
+  transition: box-shadow .22s ease, border-color .22s ease;
+}
+
+.home-service--featured {
+  background: radial-gradient(ellipse at 18% 83%, #e6edd6, transparent 72%), var(--white);
+}
+
+.home-service .home-service-icon {display: none}
+.home-service-price {color: var(--accent)}
+.project-cluster-icon {background: var(--accent-soft);color: var(--accent)}
+
+.service-art {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  border: 1px solid #d8e3cf;
+  border-radius: 13px;
+  background: linear-gradient(145deg, #f6f9f0, #e8efdc);
+  object-fit: contain;
+}
+
+.home-service > .service-art {
+  width: 100%;
+  height: clamp(72px, 9.1vw, 116px);
+}
+
+.home-service--featured > .service-art {
+  height: clamp(132px, 14.9vw, 208px);
+}
+
+.home-service--featured .service-art {border-color: #c5d5b9}
+
+.home-service .tile-arrow,
+.project-feature .tile-arrow {
+  border-color: #c8d8c4;
+  background: #f2f7ed;
+  color: #264734;
+}
+
+.service-detail .detail-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(116px, 25%);
+  grid-template-areas: "intro art" "price art";
+  align-items: center;
+  gap: 7px clamp(12px, 3vw, 36px);
+}
+
+.detail-top > :first-child {grid-area: intro}
+.detail-top > .price {grid-area: price;margin: 0;padding: 0}
+
+.detail-top > .service-art {
+  grid-area: art;
+  width: 100%;
+  height: clamp(95px, 12vw, 154px);
+}
+
+.service-detail .detail-body {
+  border-top: 1px solid var(--line);
+  padding-top: clamp(12px, 2vw, 22px);
+}
+
+.advance-note {border-color: var(--line);background: var(--tint)}
+.project-feature,
+.project-image {border-radius: var(--radius)}
+
+.project-feature,
+.bot-project {
+  transition: box-shadow .22s ease, border-color .22s ease;
+}
+
+.project-feature-media {border-bottom: 1px solid var(--line)}
+
+#estimate-service {
+  max-width: 100%;
+  border: 1px solid #a7b8a5;
+  border-radius: 10px;
+  background: var(--white);
+  color: var(--ink);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .home-service:hover,
+  .project-feature:hover,
+  .bot-project:hover {
+    transform: none;
+    border-color: #9ab199;
+    box-shadow: 0 13px 31px #25463320;
+  }
+
+  .home-service:hover .tile-arrow,
+  .project-feature:hover .tile-arrow {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--white);
+  }
+}
+
+@media (min-width: 801px) and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .hero::before {animation: forest-ambient 4.8s ease-out both}
+
+  :is(.hero, .contact-banner) .telegram-action {
+    backdrop-filter: saturate(115%) blur(4px);
+  }
+}
+
+@keyframes forest-ambient {
+  from {transform: translate3d(-1.3%, 1.1%, 0) scale(1.04)}
+  to {transform: translate3d(0, 0, 0) scale(1)}
+}
+
+@media (max-width: 800px) {
+  .home-service:not(.home-service--featured) > .service-art {
+    grid-area: icon;
+    width: clamp(56px, 16vw, 105px);
+    height: auto;
+    border-radius: 9px;
+  }
+
+  .home-service--featured > .service-art {
+    height: clamp(106px, 21vw, 165px);
+  }
+}
+
+@media (max-width: 600px) {
+  .hero {
+    display: block;
+    box-shadow: 0 12px 26px #152a1c21;
+  }
+
+  .hero-copy {padding: 24px 18px 19px}
+  .hero::after {display: none}
+  .hero-portrait {margin: 0;border-radius: 15px}
+
+  .service-detail .detail-top {
+    grid-template-columns: minmax(0, 1fr) minmax(77px, 34%);
+    grid-template-areas: "intro intro" "price art";
+  }
+
+  .detail-top > .service-art {height: auto}
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero::before {animation: none}
+  .project-feature:hover .project-feature-media img {transform: none}
+}

@@ -1,5 +1,24 @@
 (() => {
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  const estimator = document.querySelector('[data-estimate-script]');
+  if (estimator) {
+    const loadEstimator = () => {
+      const script = document.createElement('script');
+      script.src = estimator.dataset.estimateScript;
+      document.head.append(script);
+    };
+    if (location.hash === '#estimate' || !('IntersectionObserver' in window)) {
+      loadEstimator();
+    } else {
+      const nearEstimator = new IntersectionObserver(entries => {
+        if (entries.some(entry => entry.isIntersecting)) {
+          nearEstimator.disconnect();
+          loadEstimator();
+        }
+      }, {rootMargin: '450px'});
+      nearEstimator.observe(estimator);
+    }
+  }
   if (navigator.clipboard?.writeText) {
     document.querySelectorAll('.payment-method').forEach(payment => {
       const copy = payment.querySelector('.wallet-copy');
@@ -103,59 +122,6 @@
       updateScrollPadding();
       new ResizeObserver(updateScrollPadding).observe(header);
     }
-  }
-
-  const librarySearch = document.querySelector('#library-search');
-  if (librarySearch) {
-    const status = document.querySelector('#library-search-status');
-    const index = document.querySelector('.library-index');
-    const empty = document.querySelector('.library-empty');
-    const normalize = value => value.toLocaleLowerCase('ru').replaceAll('ё', 'е');
-    const searchWord = word => {
-      if (!/^[а-я]+$/u.test(word)) return word;
-      const stem = word.replace(/(?:ами|ями|ах|ях|ов|ев|ам|ям|ой|ей|ом|ем|[аяуюеыи])$/u, '');
-      return stem.length >= 4 ? stem : word;
-    };
-    const topics = [...document.querySelectorAll('.library-topic')].map(section => {
-      const title = section.querySelector('h2').textContent + ' ' + section.dataset.libraryKeywords;
-      const entries = [...section.querySelectorAll('[data-library-result]')].map(element => ({
-        element,
-        text: normalize(title + ' ' + element.querySelector('h3').textContent + ' ' + element.querySelector('p').textContent),
-      }));
-      return {section, entries};
-    });
-    let previousQuery;
-    const filterLibrary = () => {
-      const query = normalize(librarySearch.value.trim());
-      if (query === previousQuery) return;
-      previousQuery = query;
-      const words = query ? query.split(/\s+/).map(searchWord) : [];
-      let count = 0;
-      for (const {section, entries} of topics) {
-        let matches = 0;
-        for (const {element, text} of entries) {
-          const found = words.every(word => text.includes(word));
-          if (element.hidden === found) element.hidden = !found;
-          matches += Number(found);
-        }
-        if (section.hidden !== (matches === 0)) section.hidden = matches === 0;
-        count += matches;
-      }
-      index.hidden = words.length > 0;
-      empty.hidden = count > 0;
-      status.textContent = words.length ? 'Найдено материалов: ' + count : '';
-    };
-    librarySearch.closest('.library-search').hidden = false;
-    let pendingFilter = 0;
-    librarySearch.addEventListener('input', () => {
-      if (pendingFilter) return;
-      pendingFilter = requestAnimationFrame(() => {
-        pendingFilter = 0;
-        filterLibrary();
-      });
-    });
-    window.addEventListener('pageshow', filterLibrary);
-    filterLibrary();
   }
 
   if (!('IntersectionObserver' in window) || !Element.prototype.animate) return;

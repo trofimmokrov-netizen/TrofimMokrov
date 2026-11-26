@@ -13,11 +13,12 @@ from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parents[1]
 CHECKS = {
-    '/': ('id="main"', 'contact.html#request-form', 'start=app'),
-    '/contact.html': ('id="request-form"', 'data-b24-form=', 'id="telegram"', 'аванса 5 000 ₽'),
+    '/': ('id="main"', 'contact.html#request-form', 'start=app', 'id="estimate"', 'portrait-800.avif'),
+    '/contact.html': ('id="request-form"', 'data-b24-form=', 'id="telegram"', 'аванса 5 000 ₽', 'id="request-estimate"'),
     '/services.html': ('id="business-system"', 'id="social-actions"', 'id="work-terms"'),
-    '/portfolio.html': ('id="telegram-projects"',),
+    '/portfolio.html': ('id="telegram-projects"', 'v4-content.js?'),
     '/articles.html': ('id="library-search"', 'id="topic-telegram"', 'id="topic-crm"'),
+    '/articles/supabase-table-model-and-migrations.html': ('application/ld+json', '"Article"', 'rel="canonical"'),
     '/updates.html': ('class="updates-feed"',),
     '/miniapp/': ('id="services-view"', 'id="request-view"', 'app.js?', 'аванса 5 000 ₽'),
     '/miniapp/app.js': ('loader_25.js', 'site_button/loader_3_gbqxj4.js'),

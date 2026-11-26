@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 288 160" width="288" height="160">
+ <style>
+  .surface{fill:#f7f9ef}.soft{fill:#dce6cf}.accent{fill:#cbe77c}
+  .shade{fill:#baccab;opacity:.56;stroke:none}.guide{stroke:#7c9a79;stroke-width:1.2;stroke-dasharray:2 5}
+ </style>
+ <ellipse cx="144" cy="83" rx="109" ry="59" fill="#deead1" opacity=".45"/>
+ <g fill="none" stroke="#294d36" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <path class="guide" d="M37 81h219"/>
+  <path d="M95 80h27m49 0h27m-84-5 6 5-6 5m77-10 6 5-6 5"/>
+  <rect class="shade" x="48" y="56" width="57" height="57" rx="12"/>
+  <rect class="surface" x="43" y="48" width="57" height="57" rx="12"/>
+  <rect class="shade" x="124" y="56" width="57" height="57" rx="12"/>
+  <rect class="soft" x="119" y="48" width="57" height="57" rx="12"/>
+  <rect class="shade" x="200" y="56" width="57" height="57" rx="12"/>
+  <rect class="accent" x="195" y="48" width="57" height="57" rx="12"/>
+  <path d="M61 67h22m-22 9h22m-22 9h15m62-10 8-8 9 9-8 8-9-9zm75 1 8 8 15-16"/>
+  <path class="guide" d="M71 46V34h152v12m-152 61v17h152v-17"/>
+  <circle class="surface" cx="147" cy="124" r="5"/>
+  </g>
+</svg>
