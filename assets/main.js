@@ -266,3 +266,12 @@
     }
   });
 })();
+
+(() => {
+ const select = document.getElementById('estimate-service');
+ const result = document.getElementById('estimate-result');
+ if (!select || !result) return;
+ const update = () => { result.textContent = select.value; };
+ select.addEventListener('change', update);
+ update();
+})();
