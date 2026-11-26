@@ -26,6 +26,7 @@ jobs:
         run: |
           python3 scripts/build.py
           python3 scripts/check.py
+          python3 scripts/quality-audit.py
           changes=$(git status --porcelain --untracked-files=all -- '*.html' '*.json' robots.txt sitemap.xml .nojekyll)
           if [ -n "$changes" ]; then
             printf 'Generated files differ from the checkout.\n%s\n' "$changes"
@@ -36,7 +37,7 @@ jobs:
         id: syntax
         run: |
           python3 -m compileall -q scripts telegram_bot leadfinder
-          for script in assets/main.js miniapp/app.js scripts/*-check.cjs; do
+          for script in assets/*.js miniapp/app.js scripts/*-check.cjs; do
             node --check "$script"
           done
 

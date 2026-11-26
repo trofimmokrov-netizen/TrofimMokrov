@@ -1,0 +1,233 @@
+.estimate-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  align-items: start;
+  gap: clamp(12px, 2.7vw, 32px);
+}
+
+.estimate-picker {
+  min-inline-size: 0;
+  margin: 0;
+  padding: clamp(10px, 2vw, 20px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--white);
+}
+
+.estimate-picker legend {
+  padding: 0 7px;
+  color: var(--muted);
+  font-size: .85rem;
+  font-weight: 600;
+}
+
+.estimate-choices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.estimate-choices li {
+  padding: 0;
+}
+
+.estimate-choice {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-content: center;
+  align-items: start;
+  gap: 8px;
+  height: 100%;
+  min-height: 58px;
+  padding: 9px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  line-height: 1.32;
+}
+
+.estimate-choice input {
+  inline-size: 17px;
+  block-size: 17px;
+  margin: 1px 0 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.estimate-choice strong,
+.estimate-choice small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.estimate-choice strong {
+  font-size: .9rem;
+  font-weight: 600;
+}
+
+.estimate-choice small {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: .77rem;
+}
+
+.estimate-choice:has(input:checked) {
+  border-color: var(--line);
+  background: var(--accent-soft);
+}
+
+.estimate-choice:has(input:focus-visible),
+#request-estimate-text:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .estimate-choice:hover {
+    border-color: var(--line);
+  }
+}
+
+.estimate-more {
+  margin-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.estimate-more summary {
+  min-height: 44px;
+  padding: 10px 8px;
+  color: var(--accent);
+  font-size: .88rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#estimate-more-count:not(:empty) {
+  margin-inline-start: 8px;
+  color: var(--muted);
+  font-size: .8rem;
+  font-weight: 400;
+}
+
+.estimate-summary,
+.request-estimate {
+  min-inline-size: 0;
+  padding: clamp(15px, 3vw, 27px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--tint);
+}
+
+.estimate-summary h3,
+.request-estimate h3 {
+  margin: 0 0 9px;
+  font-family: var(--display-font, inherit);
+  font-size: clamp(19px, 2vw, 25px);
+  font-weight: 600;
+}
+
+.estimate-totals {
+  margin: 12px 0;
+  border-top: 1px solid var(--line);
+  line-height: 1.35;
+}
+
+.estimate-totals div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
+  gap: 8px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.estimate-totals dd {
+  margin: 0;
+  font-weight: 700;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+#estimate-empty,
+.estimate-terms,
+.estimate-note,
+.estimate-minimum,
+.estimate-copy-status {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: .85rem;
+  line-height: 1.45;
+}
+
+.estimate-terms,
+.estimate-minimum {
+  color: var(--ink);
+}
+
+.estimate-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 14px;
+}
+
+.estimate-actions button:disabled {
+  opacity: .6;
+  cursor: default;
+}
+
+.request-estimate {
+  max-width: 530px;
+  margin: 0 auto 16px;
+}
+
+.request-estimate-services {
+  margin: 0;
+  font-size: .85rem;
+  line-height: 1.5;
+}
+
+#request-estimate-manual {
+  margin-top: 10px;
+  font-size: .85rem;
+}
+
+#request-estimate-text {
+  display: block;
+  width: 100%;
+  margin-top: 5px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--white);
+  color: var(--ink);
+  font: inherit;
+  resize: vertical;
+}
+
+.estimate-copy-status {
+  margin: 8px 0 0;
+}
+
+.estimate-copy-status:empty {
+  margin: 0;
+}
+
+@media (max-width: 720px) {
+  .estimate-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 450px) {
+  .estimate-choices {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .estimate-choice {
+    min-height: 48px;
+  }
+}

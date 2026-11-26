@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 288 160" width="288" height="160">
+ <style>
+  .surface{fill:#f7f9ef}.soft{fill:#dce6cf}.accent{fill:#cbe77c}
+  .shade{fill:#baccab;opacity:.56;stroke:none}.guide{stroke:#7c9a79;stroke-width:1.2;stroke-dasharray:2 5}
+ </style>
+ <ellipse cx="144" cy="83" rx="109" ry="59" fill="#deead1" opacity=".45"/>
+ <g fill="none" stroke="#294d36" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <path class="guide" d="M36 127h216"/>
+  <rect class="shade" x="61" y="28" width="149" height="110" rx="9"/>
+  <rect class="surface" x="53" y="21" width="149" height="110" rx="9"/>
+  <rect class="soft" x="63" y="31" width="129" height="88" rx="5"/>
+  <circle class="accent" cx="154" cy="53" r="10"/>
+  <path class="surface" d="m67 111 38-48 25 30 23-19 34 37z"/>
+  <path d="m94 77 11 5 9-8m29 8 10 6 7-4"/>
+  <path class="guide" d="M75 46h17m-17 7h8"/>
+  <rect class="surface" x="192" y="83" width="52" height="47" rx="9"/>
+  <path class="accent" d="m218 92 4 12 12 3-12 4-4 11-4-11-12-4 12-3z"/>
+  <path d="M216 46v15m-7-7h14m11 6v8m-4-4h8"/>
+  </g>
+</svg>

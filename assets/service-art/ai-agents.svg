@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 288 160" width="288" height="160">
+ <style>
+  .surface{fill:#f7f9ef}.soft{fill:#dce6cf}.accent{fill:#cbe77c}
+  .shade{fill:#baccab;opacity:.56;stroke:none}.guide{stroke:#7c9a79;stroke-width:1.2;stroke-dasharray:2 5}
+ </style>
+ <ellipse cx="144" cy="83" rx="109" ry="59" fill="#deead1" opacity=".45"/>
+ <g fill="none" stroke="#294d36" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <path class="guide" d="M72 51h32m80 0h32M72 111h32m80 0h32M144 30v19m0 62v19"/>
+  <rect class="shade" x="94" y="43" width="108" height="86" rx="13"/>
+  <rect class="surface" x="88" y="37" width="108" height="86" rx="13"/>
+  <path d="M105 55h26m-26 49h73"/>
+  <rect class="accent" x="108" y="71" width="26" height="13" rx="4"/>
+  <rect class="soft" x="141" y="71" width="35" height="13" rx="4"/>
+  <path d="m114 77 3 3 7-6m23 4h23"/>
+  <circle class="surface" cx="68" cy="51" r="14"/>
+  <circle class="surface" cx="68" cy="111" r="14"/>
+  <circle class="surface" cx="217" cy="51" r="14"/>
+  <circle class="accent" cx="217" cy="111" r="14"/>
+  <path d="M63 51h10m-5-5v10m-5 55h10m138-60h12m-6-6v12m-5 54 4 4 7-8"/>
+  </g>
+</svg>
